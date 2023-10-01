@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -17,26 +19,33 @@ namespace FluidBG {
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
-	
 	public partial class MainWindow : Window {
+		private static readonly Version version = new Version(1, 0, 0);
+		private static readonly string githubRepo = "https://github.com/titushm/ThisCord-Installer";
+		private static readonly HttpClient httpClient = new ();
 		int[] comboBoxSecondIntervals = { 1, 60, 3600, 86400, 604800 };
 		private IntervalTimer timer;
+
 		private static class Paths {
-			public static readonly string DataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\titushm\\FluidBG";
+			public static readonly string DataFolder =
+				Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\titushm\\FluidBG";
+
 			public static readonly string LogFile = $"{DataFolder}\\log.tmp";
 			public static readonly string ConfigFile = $"{DataFolder}\\config.json";
 		}
 
 		public MainWindow() {
 			InitializeComponent();
-			
+
 			NotifyIcon notifyIcon = new NotifyIcon();
 			notifyIcon.Icon = new System.Drawing.Icon("FluidBG.ico");
 			notifyIcon.Visible = true;
 			notifyIcon.ContextMenuStrip = new ContextMenuStrip();
 			notifyIcon.ContextMenuStrip.Items.Add("Change Now").Click += (sender, e) => { ChangeRandomWallpaper(); };
 			notifyIcon.ContextMenuStrip.Items.Add("-");
-			notifyIcon.ContextMenuStrip.Items.Add("Exit").Click += (sender, e) => { System.Windows.Application.Current.Shutdown(); };
+			notifyIcon.ContextMenuStrip.Items.Add("Exit").Click += (sender, e) => {
+				System.Windows.Application.Current.Shutdown();
+			};
 			notifyIcon.Click += (sender, e) => {
 				if (((MouseEventArgs)e).Button == MouseButtons.Left) {
 					Show();
@@ -44,7 +53,30 @@ namespace FluidBG {
 			};
 		}
 
-    private void ChangeRandomWallpaper() {
+		private async void CheckUpdate() {
+			await Task.Run(() => {
+				try {
+					Task<HttpResponseMessage> response =
+						httpClient.GetAsync(githubRepo + "/releases/latest");
+					string redirectUrl = response.Result.RequestMessage.RequestUri.ToString();
+					Version latestVersion = Version.Parse(redirectUrl.Split('/').Last());
+					if (latestVersion > version) {
+						System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate {
+							MessageBoxResult updateMessageResult = MessageBox.Show($"Update available: v{latestVersion}\nWould you like to go to the github repo to update", "FluidBG", MessageBoxButton.YesNo);
+							if (updateMessageResult == MessageBoxResult.Yes) {
+								Process.Start(new ProcessStartInfo {
+									FileName = githubRepo + "/releases/latest",
+									UseShellExecute = true
+								});
+							}
+						});
+					}
+				}
+				catch {}
+			});
+		}
+
+		private void ChangeRandomWallpaper() {
 			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			Log("Tick occured");
 			string[] configSourcePaths = GetConfigProperty<string[]>("sourcePaths");
@@ -61,27 +93,28 @@ namespace FluidBG {
 				randomIndex = random.Next(0, files.Length);
 				randomPath = files[randomIndex];
 			}
+
 			Wallpaper.Set(randomPath);
-            HistoryListBox.Items.Insert(0, new ListBoxItem() {
-                Style = (Style)FindResource("Fluid:ListBoxItem"),
-                Content = new DockPanel() {
+			HistoryListBox.Items.Insert(0, new ListBoxItem() {
+				Style = (Style)FindResource("Fluid:ListBoxItem"),
+				Content = new DockPanel() {
 					Children = {
-						new TextBlock() { 
+						new TextBlock() {
 							Text = randomPath,
 						},
 						new TextBlock() {
 							HorizontalAlignment = HorizontalAlignment.Right,
 							Text = DateTime.Now.ToString("HH:mm:ss")
 						}
-                    }
-                }
-            });
-        }
+					}
+				}
+			});
+		}
+
 		private void PopulateSourceList() {
 			SourceListBox.Items.Clear();
 			string[] configSourcePaths = GetConfigProperty<string[]>("sourcePaths");
-			foreach (string path in configSourcePaths)
-			{
+			foreach (string path in configSourcePaths) {
 				bool isDir = Directory.Exists(path);
 				bool isFile = File.Exists(path);
 				if (!isDir && !isFile) continue;
@@ -90,26 +123,26 @@ namespace FluidBG {
 					Content = new TextBlock() {
 						Text = path
 					}
-				});	
+				});
 			}
 		}
 
-        private void PopulateIntervals() {
-            decimal interval = GetConfigProperty<decimal>("interval");
-            int intervalIndex = GetConfigProperty<int>("intervalIndex");
-            bool enabled = GetConfigProperty<bool>("enabled");
-            IntervalDecimalUpDown.Value = interval;
-            IntervalComboBox.SelectedIndex = intervalIndex;
-            EnabledToggleButton.IsChecked = enabled;
-        }
+		private void PopulateIntervals() {
+			decimal interval = GetConfigProperty<decimal>("interval");
+			int intervalIndex = GetConfigProperty<int>("intervalIndex");
+			bool enabled = GetConfigProperty<bool>("enabled");
+			IntervalDecimalUpDown.Value = interval;
+			IntervalComboBox.SelectedIndex = intervalIndex;
+			EnabledToggleButton.IsChecked = enabled;
+		}
 
-        private string GetSelectedSourcePath() {
+		private string GetSelectedSourcePath() {
 			ListBoxItem sourceListBox = (ListBoxItem)SourceListBox.SelectedItem;
 			TextBlock listItemText = (TextBlock)sourceListBox.Content;
 			string selectedPath = listItemText.Text;
 			return selectedPath;
 		}
-		
+
 		private void ClearLogFile() {
 			File.WriteAllText(Paths.LogFile, "");
 			Log("Log file cleared");
@@ -131,7 +164,8 @@ namespace FluidBG {
 				StreamWriter logWriter = File.AppendText(Paths.LogFile);
 				logWriter.Write($"[{timeStamp}] {text}\n");
 				logWriter.Close();
-			} catch {}
+			}
+			catch { }
 		}
 
 
@@ -142,6 +176,7 @@ namespace FluidBG {
 			if (jsonObject.ContainsKey(propertyName)) {
 				return jsonObject[propertyName].ToObject<T>();
 			}
+
 			return default;
 		}
 
@@ -152,6 +187,7 @@ namespace FluidBG {
 			if (jsonObject.ContainsKey(propertyName)) {
 				jsonObject.Property(propertyName).Remove();
 			}
+
 			jsonObject.Add(propertyName, value);
 			jsonString = JsonConvert.SerializeObject(jsonObject);
 			File.WriteAllText(Paths.ConfigFile, jsonString);
@@ -177,41 +213,42 @@ namespace FluidBG {
 			SetConfigProperty("sourcePaths", modifiedArray);
 			PopulateSourceList();
 		}
-		
+
 		private void OpenImagePathButton_Click(object sender, RoutedEventArgs e) {
 			if (SourceListBox.SelectedIndex == -1) return;
 			string selectedPath = GetSelectedSourcePath();
-			Process.Start("explorer.exe", $"/select,\"{selectedPath}\""); 
+			Process.Start("explorer.exe", $"/select,\"{selectedPath}\"");
 		}
 
-		private void Window_Loaded(object sender, RoutedEventArgs e)
-		{
+		private void Window_Loaded(object sender, RoutedEventArgs e) {
+			VersionTextBlock.Text = $"v{version}";
 			if (!Directory.Exists(Paths.DataFolder)) {
 				Directory.CreateDirectory(Paths.DataFolder);
 			}
 
-			if (!File.Exists(Paths.LogFile))
-			{
+			if (!File.Exists(Paths.LogFile)) {
 				File.Create(Paths.LogFile).Close();
 			}
 
-			if (!File.Exists(Paths.ConfigFile))
-			{
+			if (!File.Exists(Paths.ConfigFile)) {
 				File.Create(Paths.ConfigFile).Close();
 				File.WriteAllText(Paths.ConfigFile, "{}");
 			}
+
 			ValidateConfig();
 			bool enabled = GetConfigProperty<bool>("enabled");
 			int intervalIndex = GetConfigProperty<int>("intervalIndex");
 			timer = new IntervalTimer(comboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
 			if (enabled) {
 				timer.Start();
-			} 
+			}
+
 			ClearLogFile();
 			PopulateSourceList();
 			PopulateIntervals();
 			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
-            Log("Finished creating paths");
+			CheckUpdate();
+			Log("Finished creating paths");
 		}
 
 		private void LogButton_Click(object sender, RoutedEventArgs e) {
@@ -222,73 +259,81 @@ namespace FluidBG {
 			ClearLogFile();
 		}
 
-        private void ChangeNowButton_Click(object sender, RoutedEventArgs e) {
+		private void ChangeNowButton_Click(object sender, RoutedEventArgs e) {
 			ChangeRandomWallpaper();
-        }
+		}
 
-        private void SetHistoryWallpaperButton_Click(object sender, RoutedEventArgs e) {
-            if (HistoryListBox.SelectedIndex == -1) return;
-            string path = ((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content).Children[0]).Text;
+		private void SetHistoryWallpaperButton_Click(object sender, RoutedEventArgs e) {
+			if (HistoryListBox.SelectedIndex == -1) return;
+			string path =
+				((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content)
+					.Children[0]).Text;
 			Wallpaper.Set(path);
-        }
+		}
 
-        private void OpenHistoryImageButton_Click(object sender, RoutedEventArgs e) {
-            if (HistoryListBox.SelectedIndex == -1) return;
-			string path = ((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content).Children[0]).Text;
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = path,
-                UseShellExecute = true
-            });
-            e.Handled = true;
-        }
+		private void OpenHistoryImageButton_Click(object sender, RoutedEventArgs e) {
+			if (HistoryListBox.SelectedIndex == -1) return;
+			string path =
+				((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content).Children[0]).Text;
+			Process.Start(new ProcessStartInfo {
+				FileName = path,
+				UseShellExecute = true
+			});
+			e.Handled = true;
+		}
 
-        private void SelectPathButton_Click(object sender, RoutedEventArgs e) {
+		private void SelectPathButton_Click(object sender, RoutedEventArgs e) {
 			Button button = (Button)sender;
 			bool isFolder = bool.Parse(button.Tag.ToString());
 			CommonOpenFileDialog fileDialog = new CommonOpenFileDialog() {
 				IsFolderPicker = isFolder,
 				InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
 			};
-			if (!isFolder) fileDialog.Filters.Add(new CommonFileDialogFilter("Image Files", "*.jpg;*.jpeg;*.png;*.bmp;*.gif"));
+			if (!isFolder)
+				fileDialog.Filters.Add(new CommonFileDialogFilter("Image Files", "*.jpg;*.jpeg;*.png;*.bmp;*.gif"));
 			if (fileDialog.ShowDialog() != CommonFileDialogResult.Ok) return;
-				string selectedPath = fileDialog.FileName;
-				string[] configSourcePaths = GetConfigProperty<string[]>("sourcePaths");
-				if (configSourcePaths == default(string[])) configSourcePaths = new string[0];
-				JArray modifiedArray = JArray.FromObject(configSourcePaths);
-				modifiedArray.Add(new JValue(selectedPath));
-				SetConfigProperty("sourcePaths", modifiedArray);
-				PopulateSourceList();
+			string selectedPath = fileDialog.FileName;
+			string[] configSourcePaths = GetConfigProperty<string[]>("sourcePaths");
+			if (configSourcePaths == default(string[])) configSourcePaths = new string[0];
+			JArray modifiedArray = JArray.FromObject(configSourcePaths);
+			modifiedArray.Add(new JValue(selectedPath));
+			SetConfigProperty("sourcePaths", modifiedArray);
+			PopulateSourceList();
 		}
 
-        private void IntervalUpDown_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
-	        if (IntervalComboBox.SelectedIndex == -1 || IntervalDecimalUpDown.Value == null) return;
-			if ((Convert.ToDouble(e.NewValue) * comboBoxSecondIntervals[IntervalComboBox.SelectedIndex]) * 1000 > Int32.MaxValue) {
+		private void IntervalUpDown_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
+			if (IntervalComboBox.SelectedIndex == -1 || IntervalDecimalUpDown.Value == null) return;
+			if ((Convert.ToDouble(e.NewValue) * comboBoxSecondIntervals[IntervalComboBox.SelectedIndex]) * 1000 >
+				Int32.MaxValue) {
 				MessageBox.Show("Interval must be less than 4 weeks");
 				return;
 			}
+
 			SetConfigProperty("interval", new JValue(e.NewValue));
 			timer.ChangeInterval(Convert.ToDouble(e.NewValue) * comboBoxSecondIntervals[IntervalComboBox.SelectedIndex]);
-        }
+		}
 
 		private void IntervalUnit_Changed(object sender, SelectionChangedEventArgs e) {
 			ComboBoxItem selectedItem = (ComboBoxItem)e.AddedItems[0];
 			int selectedIndex = IntervalComboBox.Items.IndexOf(selectedItem);
 			if (IntervalComboBox.SelectedIndex == -1 || IntervalDecimalUpDown.Value == null) return;
-			if ((Convert.ToDouble(IntervalDecimalUpDown.Value.Value) * comboBoxSecondIntervals[selectedIndex]) * 1000 > Int32.MaxValue) {
+			if ((Convert.ToDouble(IntervalDecimalUpDown.Value.Value) * comboBoxSecondIntervals[selectedIndex]) * 1000 >
+				Int32.MaxValue) {
 				MessageBox.Show("Interval must be less than 4 weeks");
+				IntervalDecimalUpDown.Value = 1;
 				return;
 			}
 			SetConfigProperty("intervalIndex", new JValue(selectedIndex));
 			timer.ChangeInterval(Convert.ToDouble(IntervalDecimalUpDown.Value.Value) * comboBoxSecondIntervals[selectedIndex]);
-        }
+		}
 
 		private void EnabledButton_OnClick(object sender, RoutedEventArgs e) {
 			SetConfigProperty("enabled", new JValue(EnabledToggleButton.IsChecked));
 			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			if (EnabledToggleButton.IsChecked == true) {
 				timer.Start();
-			} else {
+			}
+			else {
 				timer.Stop();
 				NextChangeTextBlock.Text = "Never";
 			}
@@ -298,5 +343,5 @@ namespace FluidBG {
 			e.Cancel = true;
 			Hide();
 		}
-    }
+	}
 }

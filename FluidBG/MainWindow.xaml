@@ -660,7 +660,7 @@
                     </DockPanel>
                     <Border Padding="0,10,0,10">
                         <StackPanel Orientation="Horizontal">
-                            <xctk:DecimalUpDown Name="IntervalDecimalUpDown" HorizontalAlignment="Center" ShowButtonSpinner="False" Margin="0,0,5,0" MaxWidth="100" ValueChanged="IntervalUpDown_ValueChanged"></xctk:DecimalUpDown>
+                            <xctk:DecimalUpDown Name="IntervalDecimalUpDown" HorizontalAlignment="Center" ShowButtonSpinner="False" Margin="0,0,5,0" MaxWidth="100" Minimum="0.1" ValueChanged="IntervalUpDown_ValueChanged"></xctk:DecimalUpDown>
                             <ComboBox Name="IntervalComboBox" Style="{DynamicResource Fluid:ComboBox}" HorizontalAlignment="Left" BorderThickness="1" BorderBrush="Black" Background="White" SelectionChanged="IntervalUnit_Changed">
                                 <ComboBoxItem>Seconds</ComboBoxItem>
                                 <ComboBoxItem>Minutes</ComboBoxItem>
@@ -789,9 +789,10 @@
                     <TextBlock FontSize="24" Foreground="Black" FontWeight="Bold">About</TextBlock>
                     <TextBlock FontWeight="Thin" FontSize="24" Foreground="Black" Margin="10,0,0,0">Information about the app</TextBlock>
                 </StackPanel>
+                <TextBlock Name="VersionTextBlock" Foreground="Black" FontWeight="Thin"></TextBlock>
 
                 <!-- Icons Subheader -->
-                <Border Padding="0,20,0,10">
+                <Border Padding="0,10,0,10">
                     <StackPanel>
                         <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Icons</TextBlock>
                         <TextBlock>
@@ -821,7 +822,6 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
-
             </StackPanel>
         </TabItem>
 
