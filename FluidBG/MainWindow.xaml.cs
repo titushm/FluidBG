@@ -11,6 +11,7 @@ using System.Windows.Navigation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using Microsoft.Win32;
 using Button = System.Windows.Controls.Button;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using MessageBox = System.Windows.MessageBox;
@@ -22,7 +23,9 @@ namespace FluidBG {
 	public partial class MainWindow : Window {
 		private static readonly Version version = new Version(1, 0, 0);
 		private static readonly string githubRepo = "https://github.com/titushm/FluidBG";
-		private static readonly HttpClient httpClient = new ();
+		private static RegistryKey startupRegistryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+
+		private static readonly HttpClient httpClient = new();
 		int[] comboBoxSecondIntervals = { 1, 60, 3600, 86400, 604800 };
 		private IntervalTimer timer;
 
@@ -56,13 +59,14 @@ namespace FluidBG {
 		private async void CheckUpdate() {
 			await Task.Run(() => {
 				try {
-					Task<HttpResponseMessage> response =
-						httpClient.GetAsync(githubRepo + "/releases/latest");
+					Task<HttpResponseMessage> response = httpClient.GetAsync(githubRepo + "/releases/latest");
 					string redirectUrl = response.Result.RequestMessage.RequestUri.ToString();
 					Version latestVersion = Version.Parse(redirectUrl.Split('/').Last());
 					if (latestVersion > version) {
 						System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate {
-							MessageBoxResult updateMessageResult = MessageBox.Show($"Update available: v{latestVersion}\nWould you like to go to the github repo to update", "FluidBG", MessageBoxButton.YesNo);
+							MessageBoxResult updateMessageResult = MessageBox.Show(
+								$"Update available: v{latestVersion}\nWould you like to go to the github repo to update",
+								"FluidBG", MessageBoxButton.YesNo);
 							if (updateMessageResult == MessageBoxResult.Yes) {
 								Process.Start(new ProcessStartInfo {
 									FileName = githubRepo + "/releases/latest",
@@ -72,7 +76,7 @@ namespace FluidBG {
 						});
 					}
 				}
-				catch {}
+				catch { }
 			});
 		}
 
@@ -80,6 +84,7 @@ namespace FluidBG {
 			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			Log("Tick occured");
 			string[] configSourcePaths = GetConfigProperty<string[]>("sourcePaths");
+			if (configSourcePaths == default(string[])) configSourcePaths = new string[0];
 			if (configSourcePaths.Length == 0) return;
 			Random random = new Random();
 			int randomIndex = random.Next(0, configSourcePaths.Length);
@@ -114,6 +119,7 @@ namespace FluidBG {
 		private void PopulateSourceList() {
 			SourceListBox.Items.Clear();
 			string[] configSourcePaths = GetConfigProperty<string[]>("sourcePaths");
+			if (configSourcePaths == default(string[])) configSourcePaths = new string[0];
 			foreach (string path in configSourcePaths) {
 				bool isDir = Directory.Exists(path);
 				bool isFile = File.Exists(path);
@@ -242,7 +248,9 @@ namespace FluidBG {
 			if (enabled) {
 				timer.Start();
 			}
-
+			if (startupRegistryKey.GetValue("FluidBG") != null) {
+				StartupToggleButton.IsChecked = true;
+			}
 			ClearLogFile();
 			PopulateSourceList();
 			PopulateIntervals();
@@ -274,7 +282,8 @@ namespace FluidBG {
 		private void OpenHistoryImageButton_Click(object sender, RoutedEventArgs e) {
 			if (HistoryListBox.SelectedIndex == -1) return;
 			string path =
-				((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content).Children[0]).Text;
+				((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content)
+					.Children[0]).Text;
 			Process.Start(new ProcessStartInfo {
 				FileName = path,
 				UseShellExecute = true
@@ -302,15 +311,17 @@ namespace FluidBG {
 		}
 
 		private void IntervalUpDown_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
-			if (IntervalComboBox.SelectedIndex == -1 || IntervalDecimalUpDown.Value == null) return;
+			if (IntervalComboBox == null || IntervalComboBox.SelectedIndex == -1 ||
+			    IntervalDecimalUpDown.Value == null) return;
 			if ((Convert.ToDouble(e.NewValue) * comboBoxSecondIntervals[IntervalComboBox.SelectedIndex]) * 1000 >
-				Int32.MaxValue) {
+			    Int32.MaxValue) {
 				MessageBox.Show("Interval must be less than 4 weeks");
 				return;
 			}
 
 			SetConfigProperty("interval", new JValue(e.NewValue));
-			timer.ChangeInterval(Convert.ToDouble(e.NewValue) * comboBoxSecondIntervals[IntervalComboBox.SelectedIndex]);
+			timer.ChangeInterval(Convert.ToDouble(e.NewValue) *
+			                     comboBoxSecondIntervals[IntervalComboBox.SelectedIndex]);
 		}
 
 		private void IntervalUnit_Changed(object sender, SelectionChangedEventArgs e) {
@@ -318,13 +329,15 @@ namespace FluidBG {
 			int selectedIndex = IntervalComboBox.Items.IndexOf(selectedItem);
 			if (IntervalComboBox.SelectedIndex == -1 || IntervalDecimalUpDown.Value == null) return;
 			if ((Convert.ToDouble(IntervalDecimalUpDown.Value.Value) * comboBoxSecondIntervals[selectedIndex]) * 1000 >
-				Int32.MaxValue) {
+			    Int32.MaxValue) {
 				MessageBox.Show("Interval must be less than 4 weeks");
 				IntervalDecimalUpDown.Value = 1;
 				return;
 			}
+
 			SetConfigProperty("intervalIndex", new JValue(selectedIndex));
-			timer.ChangeInterval(Convert.ToDouble(IntervalDecimalUpDown.Value.Value) * comboBoxSecondIntervals[selectedIndex]);
+			timer.ChangeInterval(Convert.ToDouble(IntervalDecimalUpDown.Value.Value) *
+			                     comboBoxSecondIntervals[selectedIndex]);
 		}
 
 		private void EnabledButton_OnClick(object sender, RoutedEventArgs e) {
@@ -342,6 +355,15 @@ namespace FluidBG {
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
 			e.Cancel = true;
 			Hide();
+		}
+
+		private void StartupButton_Click(object sender, RoutedEventArgs e) {
+			if (StartupToggleButton.IsChecked == true) {
+				startupRegistryKey.SetValue("FluidBG", System.Windows.Forms.Application.ExecutablePath);
+			}
+			else {
+				startupRegistryKey.DeleteValue("FluidBG", false);
+			}
 		}
 	}
 }
