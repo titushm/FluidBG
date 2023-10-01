@@ -21,7 +21,7 @@ namespace FluidBG {
 	/// </summary>
 	public partial class MainWindow : Window {
 		private static readonly Version version = new Version(1, 0, 0);
-		private static readonly string githubRepo = "https://github.com/titushm/ThisCord-Installer";
+		private static readonly string githubRepo = "https://github.com/titushm/FluidBG";
 		private static readonly HttpClient httpClient = new ();
 		int[] comboBoxSecondIntervals = { 1, 60, 3600, 86400, 604800 };
 		private IntervalTimer timer;
