@@ -2,7 +2,7 @@
 Never get bored of the same wallpaper again.
 
 # Features
-- Lightweight ~40 MB mem / 1.39 MB unzipped space used
+- Lightweight ~40 MB memory / 1.39 MB when unzipped
 - Hide window to system tray
 - Select folders and individual files to choose wallpaper from
 - see wallpaper history
