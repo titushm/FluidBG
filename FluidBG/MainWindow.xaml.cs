@@ -99,8 +99,10 @@ namespace FluidBG {
 				randomPath = files[randomIndex];
 			}
 
-			MessageBox.Show(WallpaperModeComboBox.SelectedIndex.ToString());
 			Wallpaper.Set(randomPath, WallpaperModeComboBox.SelectedIndex);
+			if (HistoryListBox.Items.Count > 1000) {
+				HistoryListBox.Items.RemoveAt(HistoryListBox.Items.Count - 1);
+			}
 			HistoryListBox.Items.Insert(0, new ListBoxItem() {
 				Style = (Style)FindResource("Fluid:ListBoxItem"),
 				Content = new DockPanel() {
