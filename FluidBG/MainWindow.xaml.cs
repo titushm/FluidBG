@@ -21,7 +21,7 @@ namespace FluidBG {
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version version = new Version(1, 0, 0);
+		private static readonly Version version = new Version(1, 0, 1);
 		private static readonly string githubRepo = "https://github.com/titushm/FluidBG";
 		private static RegistryKey startupRegistryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 
