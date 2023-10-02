@@ -106,6 +106,7 @@ namespace FluidBG {
 					Children = {
 						new TextBlock() {
 							Text = randomPath,
+							Padding = new Thickness(0,0,10,0)
 						},
 						new TextBlock() {
 							HorizontalAlignment = HorizontalAlignment.Right,
@@ -336,15 +337,14 @@ namespace FluidBG {
 			}
 
 			SetConfigProperty("intervalIndex", new JValue(selectedIndex));
-			timer.ChangeInterval(Convert.ToDouble(IntervalDecimalUpDown.Value.Value) *
-			                     comboBoxSecondIntervals[selectedIndex]);
+			timer.ChangeInterval(Convert.ToDouble(IntervalDecimalUpDown.Value.Value) * comboBoxSecondIntervals[selectedIndex]);
 		}
 
 		private void EnabledButton_OnClick(object sender, RoutedEventArgs e) {
 			SetConfigProperty("enabled", new JValue(EnabledToggleButton.IsChecked));
-			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			if (EnabledToggleButton.IsChecked == true) {
 				timer.Start();
+				NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			}
 			else {
 				timer.Stop();

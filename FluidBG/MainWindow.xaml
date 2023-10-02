@@ -759,7 +759,7 @@
                 </StackPanel>
                 
                 <!-- Startup Subheader -->
-                <Border>
+                <Border Padding="0,10,0,0">
                     <StackPanel>
                         <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Startup</TextBlock>
                         <ToggleButton Name="StartupToggleButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Left" Click="StartupButton_Click">Run on startup</ToggleButton>
