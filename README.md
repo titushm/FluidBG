@@ -8,5 +8,6 @@ Never get bored of the same wallpaper again.
 - see wallpaper history
 - automatic startup setting
 - Change now buttons
+- Choose wallpaper style (Center, Stretch, Tile)
 
 ![Example](https://github.com/titushm/FluidBG/blob/main/FluidBG_Window.png?raw=true)
