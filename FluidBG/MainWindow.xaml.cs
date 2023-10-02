@@ -99,7 +99,8 @@ namespace FluidBG {
 				randomPath = files[randomIndex];
 			}
 
-			Wallpaper.Set(randomPath);
+			MessageBox.Show(WallpaperModeComboBox.SelectedIndex.ToString());
+			Wallpaper.Set(randomPath, WallpaperModeComboBox.SelectedIndex);
 			HistoryListBox.Items.Insert(0, new ListBoxItem() {
 				Style = (Style)FindResource("Fluid:ListBoxItem"),
 				Content = new DockPanel() {
@@ -365,5 +366,6 @@ namespace FluidBG {
 				startupRegistryKey.DeleteValue("FluidBG", false);
 			}
 		}
+		
 	}
 }

@@ -661,7 +661,7 @@
                     <Border Padding="0,10,0,10">
                         <StackPanel Orientation="Horizontal">
                             <xctk:DecimalUpDown Name="IntervalDecimalUpDown" HorizontalAlignment="Center" ShowButtonSpinner="False" Margin="0,0,5,0" MaxWidth="100" Minimum="0.1" DefaultValue="1" ValueChanged="IntervalUpDown_ValueChanged"></xctk:DecimalUpDown>
-                            <ComboBox Name="IntervalComboBox" Style="{DynamicResource Fluid:ComboBox}" HorizontalAlignment="Left" BorderThickness="1" BorderBrush="Black" Background="White" SelectionChanged="IntervalUnit_Changed">
+                            <ComboBox Name="IntervalComboBox" Style="{DynamicResource Fluid:ComboBox}" HorizontalAlignment="Left" BorderBrush="Black" Background="White" SelectionChanged="IntervalUnit_Changed">
                                 <ComboBoxItem>Seconds</ComboBoxItem>
                                 <ComboBoxItem>Minutes</ComboBoxItem>
                                 <ComboBoxItem>Hours</ComboBoxItem>
@@ -758,6 +758,18 @@
                     <TextBlock FontWeight="Thin" FontSize="24" Foreground="Black" Margin="10,0,0,0">Change how the app works</TextBlock>
                 </StackPanel>
                 
+                <!-- Style Subheader -->
+                <Border Padding="0,10,0,0">
+                    <StackPanel>
+                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Wallpaper Style</TextBlock>
+                        <ComboBox Name="WallpaperModeComboBox" Style="{DynamicResource Fluid:ComboBox}" SelectedIndex="2" HorizontalAlignment="Left" BorderBrush="Black" Background="White">
+                            <ComboBoxItem>Stretched</ComboBoxItem>
+                            <ComboBoxItem>Centered</ComboBoxItem>
+                            <ComboBoxItem>Tiled</ComboBoxItem>
+                        </ComboBox>
+                    </StackPanel>
+                </Border>
+
                 <!-- Startup Subheader -->
                 <Border Padding="0,10,0,0">
                     <StackPanel>
@@ -765,7 +777,7 @@
                         <ToggleButton Name="StartupToggleButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Left" Click="StartupButton_Click">Run on startup</ToggleButton>
                     </StackPanel>
                 </Border>
-
+                
             </StackPanel>
         </TabItem>
 
