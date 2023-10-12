@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -21,7 +23,7 @@ namespace FluidBG {
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version version = new Version(1, 0, 1);
+		private static readonly Version version = new Version(1, 0, 2);
 		private static readonly string githubRepo = "https://github.com/titushm/FluidBG";
 		private static RegistryKey startupRegistryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 
@@ -38,22 +40,27 @@ namespace FluidBG {
 		}
 
 		public MainWindow() {
+			Log("MainWindow Called");
 			InitializeComponent();
-
-			NotifyIcon notifyIcon = new NotifyIcon();
-			notifyIcon.Icon = new System.Drawing.Icon("FluidBG.ico");
-			notifyIcon.Visible = true;
-			notifyIcon.ContextMenuStrip = new ContextMenuStrip();
-			notifyIcon.ContextMenuStrip.Items.Add("Change Now").Click += (sender, e) => { ChangeRandomWallpaper(); };
-			notifyIcon.ContextMenuStrip.Items.Add("-");
-			notifyIcon.ContextMenuStrip.Items.Add("Exit").Click += (sender, e) => {
-				System.Windows.Application.Current.Shutdown();
-			};
-			notifyIcon.Click += (sender, e) => {
-				if (((MouseEventArgs)e).Button == MouseButtons.Left) {
-					Show();
-				}
-			};
+			try {
+				NotifyIcon notifyIcon = new NotifyIcon();
+				using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG.ico"))
+					notifyIcon.Icon = new Icon(stream);
+				notifyIcon.Visible = true;
+				notifyIcon.ContextMenuStrip = new ContextMenuStrip();
+				notifyIcon.ContextMenuStrip.Items.Add("Change Now").Click += (sender, e) => { ChangeRandomWallpaper(); };
+				notifyIcon.ContextMenuStrip.Items.Add("-");
+				notifyIcon.ContextMenuStrip.Items.Add("Exit").Click += (sender, e) => { System.Windows.Application.Current.Shutdown(); };
+				notifyIcon.Click += (sender, e) => {
+					if (((MouseEventArgs)e).Button == MouseButtons.Left) {
+						Show();
+					}
+				};
+			}
+			catch (Exception e) {
+				MessageBox.Show(e.ToString());
+			}
+			Log("NotifyIcon Registered");
 		}
 
 		private async void CheckUpdate() {
@@ -79,7 +86,7 @@ namespace FluidBG {
 				catch { }
 			});
 		}
-
+		
 		private void ChangeRandomWallpaper() {
 			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			Log("Tick occured");
@@ -231,6 +238,7 @@ namespace FluidBG {
 		}
 
 		private void Window_Loaded(object sender, RoutedEventArgs e) {
+			Log("Window_Loaded");
 			VersionTextBlock.Text = $"v{version}";
 			if (!Directory.Exists(Paths.DataFolder)) {
 				Directory.CreateDirectory(Paths.DataFolder);
@@ -252,6 +260,10 @@ namespace FluidBG {
 			if (enabled) {
 				timer.Start();
 			}
+			bool startHidden = GetConfigProperty<bool>("startHidden");
+			if (startHidden) {
+				Hide();
+			}
 			if (startupRegistryKey.GetValue("FluidBG") != null) {
 				StartupToggleButton.IsChecked = true;
 			}
@@ -260,11 +272,12 @@ namespace FluidBG {
 			PopulateIntervals();
 			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			CheckUpdate();
-			Log("Finished creating paths");
+			Log("Finished initial code");
 		}
 
 		private void LogButton_Click(object sender, RoutedEventArgs e) {
 			Process.Start("notepad.exe", Paths.LogFile);
+			throw new Exception("Test exception");
 		}
 
 		private void ClearLogButton_Click(object sender, RoutedEventArgs e) {
@@ -363,11 +376,13 @@ namespace FluidBG {
 		private void StartupButton_Click(object sender, RoutedEventArgs e) {
 			if (StartupToggleButton.IsChecked == true) {
 				startupRegistryKey.SetValue("FluidBG", System.Windows.Forms.Application.ExecutablePath);
-			}
-			else {
+			} else {
 				startupRegistryKey.DeleteValue("FluidBG", false);
 			}
 		}
 		
+		private void StartHiddenButton_Click(object sender, RoutedEventArgs e) {
+			SetConfigProperty("startHidden", new JValue(StartHiddenButton.IsChecked));
+		}
 	}
 }

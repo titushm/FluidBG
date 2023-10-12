@@ -769,7 +769,15 @@
                         </ComboBox>
                     </StackPanel>
                 </Border>
-
+                
+                <!-- Start Minimised Subheader -->
+                <Border Padding="0,10,0,0">
+                    <StackPanel>
+                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Startup</TextBlock>
+                        <ToggleButton Name="StartHiddenButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Left" Click="StartHiddenButton_Click">Start minimised</ToggleButton>
+                    </StackPanel>
+                </Border>
+                
                 <!-- Startup Subheader -->
                 <Border Padding="0,10,0,0">
                     <StackPanel>
@@ -777,6 +785,7 @@
                         <ToggleButton Name="StartupToggleButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Left" Click="StartupButton_Click">Run on startup</ToggleButton>
                     </StackPanel>
                 </Border>
+                
                 
             </StackPanel>
         </TabItem>
@@ -809,7 +818,7 @@
                     <TextBlock FontSize="24" Foreground="Black" FontWeight="Bold">About</TextBlock>
                     <TextBlock FontWeight="Thin" FontSize="24" Foreground="Black" Margin="10,0,0,0">Information about the app</TextBlock>
                 </StackPanel>
-                <TextBlock Name="VersionTextBlock" Foreground="Black" FontWeight="Thin"></TextBlock>
+                <TextBlock Name="VersionTextBlock" Foreground="Black" FontWeight="Thin">1.0.2</TextBlock>
 
                 <!-- Icons Subheader -->
                 <Border Padding="0,10,0,10">

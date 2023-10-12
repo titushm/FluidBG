@@ -12,9 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="FluidBG.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="FluidBG.ico" />
   </ItemGroup>
 
   <ItemGroup>
