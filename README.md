@@ -9,5 +9,6 @@ Never get bored of the same wallpaper again.
 - automatic startup setting
 - Change now buttons
 - Choose wallpaper style (Center, Stretch, Tile)
+- Option to hide window on when app ran
 
 ![Example](https://github.com/titushm/FluidBG/blob/main/FluidBG_Window.png?raw=true)
