@@ -23,7 +23,7 @@ namespace FluidBG {
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version version = new Version(1, 0, 2);
+		private static readonly Version version = new (1, 0, 3);
 		private static readonly string githubRepo = "https://github.com/titushm/FluidBG";
 		private static RegistryKey startupRegistryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 
@@ -42,6 +42,10 @@ namespace FluidBG {
 		public MainWindow() {
 			Log("MainWindow Called");
 			InitializeComponent();
+			bool startHidden = GetConfigProperty<bool>("startHidden");
+			if (startHidden) {
+				Hide();
+			}
 			try {
 				NotifyIcon notifyIcon = new NotifyIcon();
 				using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG.ico"))
@@ -148,6 +152,10 @@ namespace FluidBG {
 			decimal interval = GetConfigProperty<decimal>("interval");
 			int intervalIndex = GetConfigProperty<int>("intervalIndex");
 			bool enabled = GetConfigProperty<bool>("enabled");
+			if (interval == default) {
+				interval = 1;
+				SetConfigProperty("interval", new JValue(interval));
+			}
 			IntervalDecimalUpDown.Value = interval;
 			IntervalComboBox.SelectedIndex = intervalIndex;
 			EnabledToggleButton.IsChecked = enabled;
@@ -256,13 +264,12 @@ namespace FluidBG {
 			ValidateConfig();
 			bool enabled = GetConfigProperty<bool>("enabled");
 			int intervalIndex = GetConfigProperty<int>("intervalIndex");
+			bool startHidden = GetConfigProperty<bool>("startHidden");
+			StartHiddenButton.IsChecked = startHidden;
+			VersionTextBlock.Text = version.ToString();
 			timer = new IntervalTimer(comboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
 			if (enabled) {
 				timer.Start();
-			}
-			bool startHidden = GetConfigProperty<bool>("startHidden");
-			if (startHidden) {
-				Hide();
 			}
 			if (startupRegistryKey.GetValue("FluidBG") != null) {
 				StartupToggleButton.IsChecked = true;
