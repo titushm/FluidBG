@@ -12,3 +12,7 @@ Never get bored of the same wallpaper again.
 - Option to hide window on when app ran
 
 ![Example](https://github.com/titushm/FluidBG/blob/main/FluidBG_Window.png?raw=true)
+
+# Todo
+- Add ability to pick backgroinds from online
+- Lockscreen wallpaper feature
