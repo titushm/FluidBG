@@ -14,5 +14,5 @@ Never get bored of the same wallpaper again.
 ![Example](https://github.com/titushm/FluidBG/blob/main/FluidBG_Window.png?raw=true)
 
 # Todo
-- Add ability to pick backgroinds from online
+- Add ability to pick backgrounds from online
 - Lockscreen wallpaper feature
