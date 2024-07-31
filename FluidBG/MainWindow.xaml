@@ -606,7 +606,11 @@
                         <Border Padding="5,0,0,5">
                             <Button Style="{StaticResource Fluid:Button}" Tag="true"  Click="SelectPathButton_Click">Add Folder</Button>
                         </Border>
-
+                        
+                        <Border Padding="5,0,0,5">
+                            <ToggleButton Name="SpotlightToggleButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Left" Click="SpotlightButton_Click">Windows Spotlight</ToggleButton>
+                        </Border>
+                        
                         <Border Padding="5,0,0,5">
                             <Button Style="{StaticResource Fluid:Button}" Click="RemoveImagePathButton_Click">Remove</Button>
                         </Border>

@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Navigation;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Microsoft.WindowsAPICodePack.Dialogs;
@@ -23,10 +24,9 @@ namespace FluidBG {
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version version = new Version(1, 0, 4);
-		private static readonly string githubRepo = "https://github.com/titushm/FluidBG";
-		private static RegistryKey startupRegistryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
-
+		private static readonly Version VERSION = new Version(1, 0, 4);
+		private static readonly string GITHUB_REPO_URL = "https://github.com/titushm/FluidBG";
+		private static RegistryKey STARTUP_REGISTRY_KEY = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 		private static readonly HttpClient httpClient = new();
 		int[] comboBoxSecondIntervals = { 1, 60, 3600, 86400, 604800 };
 		private IntervalTimer timer;
@@ -66,22 +66,28 @@ namespace FluidBG {
 				MessageBox.Show(e.ToString());
 			}
 			Log("NotifyIcon Registered");
-		}
+            bool enabled = GetConfigProperty<bool>("enabled");
+            int intervalIndex = GetConfigProperty<int>("intervalIndex");
+            timer = new IntervalTimer(comboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
+            if (enabled) {
+                timer.Start();
+            }
+        }
 
 		private async void CheckUpdate() {
 			await Task.Run(() => {
 				try {
-					Task<HttpResponseMessage> response = httpClient.GetAsync(githubRepo + "/releases/latest");
-					string redirectUrl = response.Result.RequestMessage.RequestUri.ToString();
+                    Task<HttpResponseMessage> response = httpClient.GetAsync(GITHUB_REPO_URL + "/releases/latest");
+                    string redirectUrl = response.Result.RequestMessage.RequestUri.ToString();
 					Version latestVersion = Version.Parse(redirectUrl.Split('/').Last());
-					if (latestVersion > version) {
+					if (latestVersion > VERSION) {
 						System.Windows.Application.Current.Dispatcher.Invoke((Action)delegate {
 							MessageBoxResult updateMessageResult = MessageBox.Show(
 								$"Update available: v{latestVersion}\nWould you like to go to the github repo to update",
 								"FluidBG", MessageBoxButton.YesNo);
 							if (updateMessageResult == MessageBoxResult.Yes) {
 								Process.Start(new ProcessStartInfo {
-									FileName = githubRepo + "/releases/latest",
+									FileName = GITHUB_REPO_URL + "/releases/latest",
 									UseShellExecute = true
 								});
 							}
@@ -92,14 +98,44 @@ namespace FluidBG {
 			});
 		}
 		
-		private void ChangeRandomWallpaper() {
+		private void GenerateSpotlightImage() {
+            DateTime utcNow = DateTime.UtcNow;
+            string time = utcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            string url = "https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json&rafb=0&ua=WindowsShellClient%2F0&cdm=1&disphorzres=9999&dispvertres=9999&lo=80217&pl=en-US&lc=en-US&ctry=us&time=" + time;
+            Task<HttpResponseMessage> response = httpClient.GetAsync(url);
+			string responseString = response.Result.Content.ReadAsStringAsync().Result;
+			JObject jsonObject = JsonConvert.DeserializeObject<JObject>(responseString);
+			Random random = new Random();
+			string itemString = jsonObject["batchrsp"]["items"][random.Next(2)]["item"].ToString();
+			JObject itemObject = JsonConvert.DeserializeObject<JObject>(itemString);
+			string spotlightUrl = itemObject["ad"]["image_fullscreen_001_landscape"]["u"].ToString();
+            Task<Stream> stream = httpClient.GetStreamAsync(spotlightUrl);
+            string imagePath = Paths.DataFolder + "\\spotlight.jpg";
+            using (var fs = new FileStream(imagePath, FileMode.OpenOrCreate)) {
+                stream.Result.CopyTo(fs);
+            }
+			string title = itemObject["ad"]["title_text"]["tx"].ToString();
+			string author = itemObject["ad"]["copyright_text"]["tx"].ToString();
+            SetConfigProperty("spotlightTitle", new JValue(title));
+			SetConfigProperty("spotlightAuthor", new JValue(author));
+        }
+
+
+        private void ChangeRandomWallpaper() {
 			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			Log("Tick occured");
-			string[] configSourcePaths = GetConfigProperty<string[]>("sourcePaths");
-			if (configSourcePaths == default(string[])) configSourcePaths = new string[0];
-			if (configSourcePaths.Length == 0) return;
+			List<string> configSourcePaths = GetConfigProperty<string[]>("sourcePaths").ToList();
+			bool spotlight = GetConfigProperty<bool>("spotlight");
+            string spotlightImagePath = Paths.DataFolder + "\\spotlight.jpg";
+			if (spotlight) {
+				if (!File.Exists(spotlightImagePath)) {
+					GenerateSpotlightImage();
+				}
+                configSourcePaths.Add(spotlightImagePath);
+            }
+            if (configSourcePaths.Count == 0) return;
 			Random random = new Random();
-			int randomIndex = random.Next(0, configSourcePaths.Length);
+			int randomIndex = random.Next(0, configSourcePaths.Count);
 			string randomPath = configSourcePaths[randomIndex];
 			bool isDir = Directory.Exists(randomPath);
 			bool isFile = File.Exists(randomPath);
@@ -110,17 +146,23 @@ namespace FluidBG {
 				randomIndex = random.Next(0, files.Length);
 				randomPath = files[randomIndex];
 			}
-
 			Wallpaper.Set(randomPath, WallpaperModeComboBox.SelectedIndex);
 			if (HistoryListBox.Items.Count > 1000) {
 				HistoryListBox.Items.RemoveAt(HistoryListBox.Items.Count - 1);
 			}
+			string historyText = randomPath;
+			if (randomPath == spotlightImagePath) {
+                GenerateSpotlightImage();
+                string author = GetConfigProperty<string>("spotlightAuthor");
+				string title = GetConfigProperty<string>("spotlightTitle");
+				historyText = author + " - " + title;
+            }
 			HistoryListBox.Items.Insert(0, new ListBoxItem() {
 				Style = (Style)FindResource("Fluid:ListBoxItem"),
 				Content = new DockPanel() {
 					Children = {
 						new TextBlock() {
-							Text = randomPath,
+							Text = historyText,
 							Padding = new Thickness(0,0,10,0)
 						},
 						new TextBlock() {
@@ -243,12 +285,17 @@ namespace FluidBG {
 		private void OpenImagePathButton_Click(object sender, RoutedEventArgs e) {
 			if (SourceListBox.SelectedIndex == -1) return;
 			string selectedPath = GetSelectedSourcePath();
-			Process.Start("explorer.exe", $"/select,\"{selectedPath}\"");
+			if (File.Exists(selectedPath) || Directory.Exists(selectedPath)) {
+                Process.Start("explorer.exe", $"/select,\"{selectedPath}\"");
+				return;
+            }
+			MessageBox.Show("Path does not exist");
+			
 		}
 
 		private void Window_Loaded(object sender, RoutedEventArgs e) {
 			Log("Window_Loaded");
-			VersionTextBlock.Text = $"v{version}";
+			VersionTextBlock.Text = $"v{VERSION}";
 			if (!Directory.Exists(Paths.DataFolder)) {
 				Directory.CreateDirectory(Paths.DataFolder);
 			}
@@ -261,18 +308,11 @@ namespace FluidBG {
 				File.Create(Paths.ConfigFile).Close();
 				File.WriteAllText(Paths.ConfigFile, "{}");
 			}
-			ValidateConfig();
-			bool enabled = GetConfigProperty<bool>("enabled");
-			int intervalIndex = GetConfigProperty<int>("intervalIndex");
-			bool startHidden = GetConfigProperty<bool>("startHidden");
-			StartHiddenButton.IsChecked = startHidden;
-			VersionTextBlock.Text = version.ToString();
-			timer = new IntervalTimer(comboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
-			if (enabled) {
-				timer.Start();
-			}
-			if (startupRegistryKey.GetValue("FluidBG") != null) {
+			if (STARTUP_REGISTRY_KEY.GetValue("FluidBG") != null) {
 				StartupToggleButton.IsChecked = true;
+			}
+			if (GetConfigProperty<bool>("spotlight")) {
+				SpotlightToggleButton.IsChecked = true;
 			}
 			ClearLogFile();
 			PopulateSourceList();
@@ -284,10 +324,13 @@ namespace FluidBG {
 
 		private void LogButton_Click(object sender, RoutedEventArgs e) {
 			Process.Start("notepad.exe", Paths.LogFile);
-			throw new Exception("Test exception");
 		}
 
-		private void ClearLogButton_Click(object sender, RoutedEventArgs e) {
+        private void SpotlightButton_Click(object sender, RoutedEventArgs e) {
+			SetConfigProperty("spotlight", new JValue(SpotlightToggleButton.IsChecked));
+        }
+
+        private void ClearLogButton_Click(object sender, RoutedEventArgs e) {
 			ClearLogFile();
 		}
 
@@ -297,17 +340,21 @@ namespace FluidBG {
 
 		private void SetHistoryWallpaperButton_Click(object sender, RoutedEventArgs e) {
 			if (HistoryListBox.SelectedIndex == -1) return;
-			string path =
-				((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content)
-					.Children[0]).Text;
+			string path = ((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content).Children[0]).Text;
+			if (!File.Exists(path)) {
+				MessageBox.Show("File does not exist");
+				return;
+			}
 			Wallpaper.Set(path);
 		}
 
 		private void OpenHistoryImageButton_Click(object sender, RoutedEventArgs e) {
 			if (HistoryListBox.SelectedIndex == -1) return;
-			string path =
-				((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content)
-					.Children[0]).Text;
+			string path = ((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content).Children[0]).Text;
+			if (!File.Exists(path)) {
+				MessageBox.Show("File does not exist");
+				return;
+			}
 			Process.Start(new ProcessStartInfo {
 				FileName = path,
 				UseShellExecute = true
@@ -334,7 +381,7 @@ namespace FluidBG {
 			PopulateSourceList();
 		}
 
-		private void IntervalUpDown_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
+        private void IntervalUpDown_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
 			if (IntervalComboBox == null || IntervalComboBox.SelectedIndex == -1 ||
 			    IntervalDecimalUpDown.Value == null) return;
 			if ((Convert.ToDouble(e.NewValue) * comboBoxSecondIntervals[IntervalComboBox.SelectedIndex]) * 1000 >
@@ -381,9 +428,9 @@ namespace FluidBG {
 
 		private void StartupButton_Click(object sender, RoutedEventArgs e) {
 			if (StartupToggleButton.IsChecked == true) {
-				startupRegistryKey.SetValue("FluidBG", System.Windows.Forms.Application.ExecutablePath);
+				STARTUP_REGISTRY_KEY.SetValue("FluidBG", System.Windows.Forms.Application.ExecutablePath);
 			} else {
-				startupRegistryKey.DeleteValue("FluidBG", false);
+				STARTUP_REGISTRY_KEY.DeleteValue("FluidBG", false);
 			}
 		}
 		
