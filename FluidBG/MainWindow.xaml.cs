@@ -21,7 +21,7 @@ namespace FluidBG {
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version version = new Version(1, 0, 0);
+		private static readonly Version version = new Version(1, 0, 4);
 		private static readonly string githubRepo = "https://github.com/titushm/FluidBG";
 		private static RegistryKey startupRegistryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 
@@ -54,7 +54,7 @@ namespace FluidBG {
 					Show();
 				}
 			};
-		}
+        }
 
 		private async void CheckUpdate() {
 			await Task.Run(() => {
@@ -240,15 +240,14 @@ namespace FluidBG {
 				File.Create(Paths.ConfigFile).Close();
 				File.WriteAllText(Paths.ConfigFile, "{}");
 			}
-
-			ValidateConfig();
-			bool enabled = GetConfigProperty<bool>("enabled");
-			int intervalIndex = GetConfigProperty<int>("intervalIndex");
-			timer = new IntervalTimer(comboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
-			if (enabled) {
-				timer.Start();
-			}
-			if (startupRegistryKey.GetValue("FluidBG") != null) {
+  			ValidateConfig();
+            bool enabled = GetConfigProperty<bool>("enabled");
+            int intervalIndex = GetConfigProperty<int>("intervalIndex");
+            timer = new IntervalTimer(comboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
+            if (enabled) {
+                timer.Start();
+            }
+            if (startupRegistryKey.GetValue("FluidBG") != null) {
 				StartupToggleButton.IsChecked = true;
 			}
 			ClearLogFile();
@@ -320,8 +319,7 @@ namespace FluidBG {
 			}
 
 			SetConfigProperty("interval", new JValue(e.NewValue));
-			timer.ChangeInterval(Convert.ToDouble(e.NewValue) *
-			                     comboBoxSecondIntervals[IntervalComboBox.SelectedIndex]);
+			timer.ChangeInterval(Convert.ToDouble(e.NewValue) * comboBoxSecondIntervals[IntervalComboBox.SelectedIndex]);
 		}
 
 		private void IntervalUnit_Changed(object sender, SelectionChangedEventArgs e) {
@@ -336,8 +334,7 @@ namespace FluidBG {
 			}
 
 			SetConfigProperty("intervalIndex", new JValue(selectedIndex));
-			timer.ChangeInterval(Convert.ToDouble(IntervalDecimalUpDown.Value.Value) *
-			                     comboBoxSecondIntervals[selectedIndex]);
+			timer.ChangeInterval(Convert.ToDouble(IntervalDecimalUpDown.Value.Value) * comboBoxSecondIntervals[selectedIndex]);
 		}
 
 		private void EnabledButton_OnClick(object sender, RoutedEventArgs e) {
