@@ -314,6 +314,9 @@ namespace FluidBG {
 			if (GetConfigProperty<bool>("spotlight")) {
 				SpotlightToggleButton.IsChecked = true;
 			}
+			if (GetConfigProperty<bool>("startHidden")) {
+                StartHiddenButton.IsChecked = true;
+            }
 			ClearLogFile();
 			PopulateSourceList();
 			PopulateIntervals();
