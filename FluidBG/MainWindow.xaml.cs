@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -38,23 +40,33 @@ namespace FluidBG {
 		}
 
 		public MainWindow() {
+			Log("MainWindow Called");
 			InitializeComponent();
-
-			NotifyIcon notifyIcon = new NotifyIcon();
-			notifyIcon.Icon = new System.Drawing.Icon("FluidBG.ico");
-			notifyIcon.Visible = true;
-			notifyIcon.ContextMenuStrip = new ContextMenuStrip();
-			notifyIcon.ContextMenuStrip.Items.Add("Change Now").Click += (sender, e) => { ChangeRandomWallpaper(); };
-			notifyIcon.ContextMenuStrip.Items.Add("-");
-			notifyIcon.ContextMenuStrip.Items.Add("Exit").Click += (sender, e) => {
-				System.Windows.Application.Current.Shutdown();
-			};
-			notifyIcon.Click += (sender, e) => {
-				if (((MouseEventArgs)e).Button == MouseButtons.Left) {
-					Show();
-				}
-			};
-        }
+			ValidateConfig();
+			bool startHidden = GetConfigProperty<bool>("startHidden");
+			if (startHidden) {
+				Hide();
+			}
+			try {
+				NotifyIcon notifyIcon = new NotifyIcon();
+				using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG.ico"))
+					notifyIcon.Icon = new Icon(stream);
+				notifyIcon.Visible = true;
+				notifyIcon.ContextMenuStrip = new ContextMenuStrip();
+				notifyIcon.ContextMenuStrip.Items.Add("Change Now").Click += (sender, e) => { ChangeRandomWallpaper(); };
+				notifyIcon.ContextMenuStrip.Items.Add("-");
+				notifyIcon.ContextMenuStrip.Items.Add("Exit").Click += (sender, e) => { System.Windows.Application.Current.Shutdown(); };
+				notifyIcon.Click += (sender, e) => {
+					if (((MouseEventArgs)e).Button == MouseButtons.Left) {
+						Show();
+					}
+				};
+			}
+			catch (Exception e) {
+				MessageBox.Show(e.ToString());
+			}
+			Log("NotifyIcon Registered");
+		}
 
 		private async void CheckUpdate() {
 			await Task.Run(() => {
@@ -79,7 +91,7 @@ namespace FluidBG {
 				catch { }
 			});
 		}
-
+		
 		private void ChangeRandomWallpaper() {
 			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			Log("Tick occured");
@@ -99,13 +111,17 @@ namespace FluidBG {
 				randomPath = files[randomIndex];
 			}
 
-			Wallpaper.Set(randomPath);
+			Wallpaper.Set(randomPath, WallpaperModeComboBox.SelectedIndex);
+			if (HistoryListBox.Items.Count > 1000) {
+				HistoryListBox.Items.RemoveAt(HistoryListBox.Items.Count - 1);
+			}
 			HistoryListBox.Items.Insert(0, new ListBoxItem() {
 				Style = (Style)FindResource("Fluid:ListBoxItem"),
 				Content = new DockPanel() {
 					Children = {
 						new TextBlock() {
 							Text = randomPath,
+							Padding = new Thickness(0,0,10,0)
 						},
 						new TextBlock() {
 							HorizontalAlignment = HorizontalAlignment.Right,
@@ -137,6 +153,10 @@ namespace FluidBG {
 			decimal interval = GetConfigProperty<decimal>("interval");
 			int intervalIndex = GetConfigProperty<int>("intervalIndex");
 			bool enabled = GetConfigProperty<bool>("enabled");
+			if (interval == default) {
+				interval = 1;
+				SetConfigProperty("interval", new JValue(interval));
+			}
 			IntervalDecimalUpDown.Value = interval;
 			IntervalComboBox.SelectedIndex = intervalIndex;
 			EnabledToggleButton.IsChecked = enabled;
@@ -227,6 +247,7 @@ namespace FluidBG {
 		}
 
 		private void Window_Loaded(object sender, RoutedEventArgs e) {
+			Log("Window_Loaded");
 			VersionTextBlock.Text = $"v{version}";
 			if (!Directory.Exists(Paths.DataFolder)) {
 				Directory.CreateDirectory(Paths.DataFolder);
@@ -240,14 +261,17 @@ namespace FluidBG {
 				File.Create(Paths.ConfigFile).Close();
 				File.WriteAllText(Paths.ConfigFile, "{}");
 			}
-  			ValidateConfig();
-            bool enabled = GetConfigProperty<bool>("enabled");
-            int intervalIndex = GetConfigProperty<int>("intervalIndex");
-            timer = new IntervalTimer(comboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
-            if (enabled) {
-                timer.Start();
-            }
-            if (startupRegistryKey.GetValue("FluidBG") != null) {
+			ValidateConfig();
+			bool enabled = GetConfigProperty<bool>("enabled");
+			int intervalIndex = GetConfigProperty<int>("intervalIndex");
+			bool startHidden = GetConfigProperty<bool>("startHidden");
+			StartHiddenButton.IsChecked = startHidden;
+			VersionTextBlock.Text = version.ToString();
+			timer = new IntervalTimer(comboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
+			if (enabled) {
+				timer.Start();
+			}
+			if (startupRegistryKey.GetValue("FluidBG") != null) {
 				StartupToggleButton.IsChecked = true;
 			}
 			ClearLogFile();
@@ -255,11 +279,12 @@ namespace FluidBG {
 			PopulateIntervals();
 			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			CheckUpdate();
-			Log("Finished creating paths");
+			Log("Finished initial code");
 		}
 
 		private void LogButton_Click(object sender, RoutedEventArgs e) {
 			Process.Start("notepad.exe", Paths.LogFile);
+			throw new Exception("Test exception");
 		}
 
 		private void ClearLogButton_Click(object sender, RoutedEventArgs e) {
@@ -339,9 +364,9 @@ namespace FluidBG {
 
 		private void EnabledButton_OnClick(object sender, RoutedEventArgs e) {
 			SetConfigProperty("enabled", new JValue(EnabledToggleButton.IsChecked));
-			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			if (EnabledToggleButton.IsChecked == true) {
 				timer.Start();
+				NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
 			}
 			else {
 				timer.Stop();
@@ -357,10 +382,13 @@ namespace FluidBG {
 		private void StartupButton_Click(object sender, RoutedEventArgs e) {
 			if (StartupToggleButton.IsChecked == true) {
 				startupRegistryKey.SetValue("FluidBG", System.Windows.Forms.Application.ExecutablePath);
-			}
-			else {
+			} else {
 				startupRegistryKey.DeleteValue("FluidBG", false);
 			}
+		}
+		
+		private void StartHiddenButton_Click(object sender, RoutedEventArgs e) {
+			SetConfigProperty("startHidden", new JValue(StartHiddenButton.IsChecked));
 		}
 	}
 }
