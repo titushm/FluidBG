@@ -766,10 +766,13 @@
                 <Border Padding="0,10,0,0">
                     <StackPanel>
                         <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Wallpaper Style</TextBlock>
-                        <ComboBox Name="WallpaperModeComboBox" Style="{DynamicResource Fluid:ComboBox}" SelectedIndex="2" HorizontalAlignment="Left" BorderBrush="Black" Background="White">
-                            <ComboBoxItem>Stretched</ComboBoxItem>
-                            <ComboBoxItem>Centered</ComboBoxItem>
-                            <ComboBoxItem>Tiled</ComboBoxItem>
+                        <ComboBox Name="WallpaperModeComboBox" Style="{DynamicResource Fluid:ComboBox}" SelectedIndex="0" HorizontalAlignment="Left" BorderBrush="Black" Background="White">
+                            <ComboBoxItem>Fill</ComboBoxItem>
+                            <ComboBoxItem>Fit</ComboBoxItem>
+                            <ComboBoxItem>Stretch</ComboBoxItem>
+                            <ComboBoxItem>Tile</ComboBoxItem>
+                            <ComboBoxItem>Center</ComboBoxItem>
+                            <ComboBoxItem>Span</ComboBoxItem>
                         </ComboBox>
                     </StackPanel>
                 </Border>

@@ -24,7 +24,7 @@ namespace FluidBG {
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version VERSION = new Version(1, 0, 4);
+		private static readonly Version VERSION = new Version(1, 0, 5);
 		private static readonly string GITHUB_REPO_URL = "https://github.com/titushm/FluidBG";
 		private static RegistryKey STARTUP_REGISTRY_KEY = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 		private static readonly HttpClient httpClient = new();
@@ -32,12 +32,19 @@ namespace FluidBG {
 		private IntervalTimer timer;
 
 		private static class Paths {
-			public static readonly string DataFolder =
-				Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\titushm\\FluidBG";
-
+			public static readonly string DataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\titushm\\FluidBG";
 			public static readonly string LogFile = $"{DataFolder}\\log.tmp";
 			public static readonly string ConfigFile = $"{DataFolder}\\config.json";
 		}
+
+		private Dictionary<int, int> wallpaperModes = new Dictionary<int, int> {
+            {0, 10},
+            {1, 6},
+            {2, 2},
+            {3, 0},
+            {4, 0},
+			{5, 22}
+        };
 
 		public MainWindow() {
 			Log("MainWindow Called");
@@ -146,7 +153,9 @@ namespace FluidBG {
 				randomIndex = random.Next(0, files.Length);
 				randomPath = files[randomIndex];
 			}
-			Wallpaper.Set(randomPath, WallpaperModeComboBox.SelectedIndex);
+			int mode = wallpaperModes[WallpaperModeComboBox.SelectedIndex];
+			bool tile = WallpaperModeComboBox.Text == "Tile";
+            Wallpaper.Set(randomPath, mode, tile);
 			if (HistoryListBox.Items.Count > 1000) {
 				HistoryListBox.Items.RemoveAt(HistoryListBox.Items.Count - 1);
 			}
