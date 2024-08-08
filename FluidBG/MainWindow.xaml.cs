@@ -24,7 +24,7 @@ namespace FluidBG {
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version VERSION = new Version(1, 0, 5);
+		private static readonly Version VERSION = new Version(1, 0, 6);
 		private static readonly string GITHUB_REPO_URL = "https://github.com/titushm/FluidBG";
 		private static RegistryKey STARTUP_REGISTRY_KEY = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 		private static readonly HttpClient httpClient = new();
@@ -113,7 +113,8 @@ namespace FluidBG {
 			string responseString = response.Result.Content.ReadAsStringAsync().Result;
 			JObject jsonObject = JsonConvert.DeserializeObject<JObject>(responseString);
 			Random random = new Random();
-			string itemString = jsonObject["batchrsp"]["items"][random.Next(2)]["item"].ToString();
+			jsonObject["batchrsp"]["items"][0].Remove(); // Remove the first item as it is always the same
+            string itemString = jsonObject["batchrsp"]["items"][random.Next(2)]["item"].ToString();
 			JObject itemObject = JsonConvert.DeserializeObject<JObject>(itemString);
 			string spotlightUrl = itemObject["ad"]["image_fullscreen_001_landscape"]["u"].ToString();
             Task<Stream> stream = httpClient.GetStreamAsync(spotlightUrl);
