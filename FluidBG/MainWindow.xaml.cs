@@ -24,12 +24,13 @@ namespace FluidBG {
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version VERSION = new Version(1, 0, 6);
+		private static readonly Version VERSION = new Version(1, 0, 7);
 		private static readonly string GITHUB_REPO_URL = "https://github.com/titushm/FluidBG";
 		private static RegistryKey STARTUP_REGISTRY_KEY = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 		private static readonly HttpClient httpClient = new();
 		int[] comboBoxSecondIntervals = { 1, 60, 3600, 86400, 604800 };
 		private IntervalTimer timer;
+		private NotifyIcon notifyIcon = new();
 
 		private static class Paths {
 			public static readonly string DataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\titushm\\FluidBG";
@@ -55,10 +56,10 @@ namespace FluidBG {
 				Hide();
 			}
 			try {
-				NotifyIcon notifyIcon = new NotifyIcon();
-				using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG.ico"))
-					notifyIcon.Icon = new Icon(stream);
+				using (Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG_Disabled.ico"))
+				notifyIcon.Icon = new Icon(iconStream);
 				notifyIcon.Visible = true;
+				notifyIcon.Text = "FluidBG";
 				notifyIcon.ContextMenuStrip = new ContextMenuStrip();
 				notifyIcon.ContextMenuStrip.Items.Add("Change Now").Click += (sender, e) => { ChangeRandomWallpaper(); };
 				notifyIcon.ContextMenuStrip.Items.Add("-");
@@ -66,18 +67,24 @@ namespace FluidBG {
 				notifyIcon.Click += (sender, e) => {
 					if (((MouseEventArgs)e).Button == MouseButtons.Left) {
 						Show();
-					}
+						if (WindowState == WindowState.Minimized) {
+							WindowState = WindowState.Normal;
+						}
+						Activate();
+                    }
 				};
 			}
 			catch (Exception e) {
 				MessageBox.Show(e.ToString());
 			}
-			Log("NotifyIcon Registered");
             bool enabled = GetConfigProperty<bool>("enabled");
             int intervalIndex = GetConfigProperty<int>("intervalIndex");
             timer = new IntervalTimer(comboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
             if (enabled) {
                 timer.Start();
+                using (Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG.ico"))
+                notifyIcon.Icon = new Icon(iconStream);
+				notifyIcon.Text = "FluidBG | Change at " + timer.QueryNextTickTimestamp();
             }
         }
 
@@ -130,7 +137,7 @@ namespace FluidBG {
 
 
         private void ChangeRandomWallpaper() {
-			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
+			updateNextChange();
 			Log("Tick occured");
 			List<string> configSourcePaths = GetConfigProperty<string[]>("sourcePaths").ToList();
 			bool spotlight = GetConfigProperty<bool>("spotlight");
@@ -246,6 +253,16 @@ namespace FluidBG {
 			catch { }
 		}
 
+		private void updateNextChange() {
+			if (timer.Timer.IsEnabled) {
+				NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
+				notifyIcon.Text = "FluidBG | Change at " + timer.QueryNextTickTimestamp();
+			} else {
+				NextChangeTextBlock.Text = "Never";
+				notifyIcon.Text = "FluidBG";
+            }
+
+        }
 
 		private T GetConfigProperty<T>(string propertyName) {
 			ValidateConfig();
@@ -330,7 +347,7 @@ namespace FluidBG {
 			ClearLogFile();
 			PopulateSourceList();
 			PopulateIntervals();
-			NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
+			updateNextChange();
 			CheckUpdate();
 			Log("Finished initial code");
 		}
@@ -424,17 +441,20 @@ namespace FluidBG {
 
 		private void EnabledButton_OnClick(object sender, RoutedEventArgs e) {
 			SetConfigProperty("enabled", new JValue(EnabledToggleButton.IsChecked));
-			if (EnabledToggleButton.IsChecked == true) {
-				timer.Start();
-				NextChangeTextBlock.Text = timer.QueryNextTickTimestamp();
-			}
-			else {
-				timer.Stop();
-				NextChangeTextBlock.Text = "Never";
-			}
-		}
+			Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG_Disabled.ico");
 
-		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
+            if (EnabledToggleButton.IsChecked == true) {
+				timer.Start();
+                iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG.ico");
+            }
+            else {
+				timer.Stop();				
+			}
+            notifyIcon.Icon = new Icon(iconStream);
+            updateNextChange();
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
 			e.Cancel = true;
 			Hide();
 		}

@@ -12,7 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="FluidBG_Disabled.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="FluidBG.ico" />
+    <EmbeddedResource Include="FluidBG_Disabled.ico" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,7 +4,7 @@ using System.Windows.Threading;
 namespace FluidBG; 
 
 public class IntervalTimer {
-    private DispatcherTimer? Timer { get; }
+    public DispatcherTimer? Timer { get; }
     private DateTime? LastTick { get; set; }
 
     public IntervalTimer(double interval, Action tickFunction) {
