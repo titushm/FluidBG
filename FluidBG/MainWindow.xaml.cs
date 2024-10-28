@@ -18,18 +18,19 @@ using Microsoft.Win32;
 using Button = System.Windows.Controls.Button;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using MessageBox = System.Windows.MessageBox;
+using Microsoft.WindowsAPICodePack.Shell.Interop;
 
 namespace FluidBG {
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version VERSION = new Version(1, 0, 7);
+		private static readonly Version VERSION = new Version(1, 0, 8);
 		private static readonly string GITHUB_REPO_URL = "https://github.com/titushm/FluidBG";
 		private static RegistryKey STARTUP_REGISTRY_KEY = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 		private static readonly HttpClient httpClient = new();
 		int[] comboBoxSecondIntervals = { 1, 60, 3600, 86400, 604800 };
-		private IntervalTimer timer;
+		private IntervalTimer timer;  
 		private NotifyIcon notifyIcon = new();
 
 		private static class Paths {
@@ -48,9 +49,10 @@ namespace FluidBG {
         };
 
 		public MainWindow() {
-			Log("MainWindow Called");
-			InitializeComponent();
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(AppDomain_UnhandledException);
 			ValidateConfig();
+            Log("MainWindow Called");
+			InitializeComponent();
 			bool startHidden = GetConfigProperty<bool>("startHidden");
 			if (startHidden) {
 				Hide();
@@ -88,7 +90,17 @@ namespace FluidBG {
             }
         }
 
-		private async void CheckUpdate() {
+        private void LogToFile(string message) {
+            string logPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\log.txt";
+            File.WriteAllText(logPath, message);
+        }
+
+        private void AppDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e) {
+            LogToFile(e.ExceptionObject.ToString());
+            MessageBox.Show(e.ExceptionObject.ToString());
+        }
+
+        private async void CheckUpdate() {
 			await Task.Run(() => {
 				try {
                     Task<HttpResponseMessage> response = httpClient.GetAsync(GITHUB_REPO_URL + "/releases/latest");
@@ -139,7 +151,12 @@ namespace FluidBG {
         private void ChangeRandomWallpaper() {
 			updateNextChange();
 			Log("Tick occured");
-			List<string> configSourcePaths = GetConfigProperty<string[]>("sourcePaths").ToList();
+			
+			string[] sourcePaths = GetConfigProperty<string[]>("sourcePaths");
+			if (sourcePaths == default(string[])) {
+				sourcePaths = Array.Empty<string>();
+			}
+			List<string> configSourcePaths = sourcePaths.ToList();
 			bool spotlight = GetConfigProperty<bool>("spotlight");
             string spotlightImagePath = Paths.DataFolder + "\\spotlight.jpg";
 			if (spotlight) {
@@ -234,6 +251,9 @@ namespace FluidBG {
 		}
 
 		private void ValidateConfig() {
+			if (!Directory.Exists(Paths.DataFolder)) {
+                Directory.CreateDirectory(Paths.DataFolder);
+            }
 			try {
 				string jsonString = File.ReadAllText(Paths.ConfigFile);
 				JObject jsonObject = JsonConvert.DeserializeObject<JObject>(jsonString);
@@ -321,15 +341,12 @@ namespace FluidBG {
 		}
 
 		private void Window_Loaded(object sender, RoutedEventArgs e) {
-			Log("Window_Loaded");
-			VersionTextBlock.Text = $"v{VERSION}";
-			if (!Directory.Exists(Paths.DataFolder)) {
-				Directory.CreateDirectory(Paths.DataFolder);
-			}
-
 			if (!File.Exists(Paths.LogFile)) {
 				File.Create(Paths.LogFile).Close();
 			}
+			Log("Window_Loaded");
+			VersionTextBlock.Text = $"v{VERSION}";
+
 
 			if (!File.Exists(Paths.ConfigFile)) {
 				File.Create(Paths.ConfigFile).Close();
