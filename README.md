@@ -16,3 +16,4 @@ Never get bored of the same wallpaper again.
 # Todo
 - Add ability to pick backgrounds from online
 - Lockscreen wallpaper feature
+- add taskbar transparency slider
