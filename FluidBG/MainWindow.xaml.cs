@@ -18,14 +18,13 @@ using Microsoft.Win32;
 using Button = System.Windows.Controls.Button;
 using HorizontalAlignment = System.Windows.HorizontalAlignment;
 using MessageBox = System.Windows.MessageBox;
-using Microsoft.WindowsAPICodePack.Shell.Interop;
 
 namespace FluidBG {
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		private static readonly Version VERSION = new Version(1, 0, 8);
+		private static readonly Version VERSION = new Version(1, 0, 9);
 		private static readonly string GITHUB_REPO_URL = "https://github.com/titushm/FluidBG";
 		private static RegistryKey STARTUP_REGISTRY_KEY = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 		private static readonly HttpClient httpClient = new();
@@ -128,9 +127,15 @@ namespace FluidBG {
             DateTime utcNow = DateTime.UtcNow;
             string time = utcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
             string url = "https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json&rafb=0&ua=WindowsShellClient%2F0&cdm=1&disphorzres=9999&dispvertres=9999&lo=80217&pl=en-US&lc=en-US&ctry=us&time=" + time;
-            Task<HttpResponseMessage> response = httpClient.GetAsync(url);
-			string responseString = response.Result.Content.ReadAsStringAsync().Result;
-			JObject jsonObject = JsonConvert.DeserializeObject<JObject>(responseString);
+			JObject jsonObject;
+
+            try {
+				Task<HttpResponseMessage> response = httpClient.GetAsync(url);
+				string responseString = response.Result.Content.ReadAsStringAsync().Result;
+				jsonObject = JsonConvert.DeserializeObject<JObject>(responseString);
+			} catch {
+				return;
+			}
 			Random random = new Random();
 			jsonObject["batchrsp"]["items"][0].Remove(); // Remove the first item as it is always the same
             string itemString = jsonObject["batchrsp"]["items"][random.Next(2)]["item"].ToString();
