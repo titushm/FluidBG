@@ -405,6 +405,6 @@ namespace FluidBG {
 		// private void ThemeComboBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e){ //TODO: add dark mode
 		// 	Utils.SetConfigProperty("appThemeIndex", new JValue(ThemeComboBox.SelectedIndex));
 		// 	ApplyTheme();
-		// } 
+		// }
 	}
 }
