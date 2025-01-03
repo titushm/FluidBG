@@ -1,4 +1,4 @@
-﻿<Window x:Class="FluidBG.MainWindow" FontSize="15"
+﻿<Window x:Class="FluidBG.MainWindow" FontSize="15" x:Name="FluidBGWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -6,11 +6,15 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2"
         mc:Ignorable="d"
-        Title="FluidBG" Height="550" Width="900"
-        MinHeight="550" MinWidth="900"
+        Title="FluidBG" Height="450" Width="750"
+        ResizeMode="NoResize"
+        Background="White"
         Loaded="Window_Loaded" Closing="Window_Closing">
 
     <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryTextFore" Color="Black"/>
+        <SolidColorBrush x:Key="PrimaryBack" Color="White"/>
+
         <Style x:Key="Fluid:ListBoxItem" TargetType="ListBoxItem">
             <Setter Property="Template">
                 <Setter.Value>
@@ -455,7 +459,6 @@
             <Setter Property="Background" Value="{StaticResource ComboBox.Static.Background}"/>
             <Setter Property="BorderBrush" Value="{StaticResource ComboBox.Static.Border}"/>
             <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
-            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
             <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="Padding" Value="6,3,5,3"/>
@@ -483,13 +486,9 @@
 
         <SolidColorBrush x:Key="Button.Static.Background" Color="#ebebeb"/>
         <SolidColorBrush x:Key="Button.Static.Border" Color="Transparent"/>
-        <SolidColorBrush x:Key="Button.MouseOver.Background" Color="#d3d3d3"/>
+        <SolidColorBrush x:Key="Button.MouseOver.Background" Color="White"/>
         <SolidColorBrush x:Key="Button.MouseOver.Border" Color="Transparent"/>
         <SolidColorBrush x:Key="Button.Pressed.Background" Color="#0073cf"/>
-        <SolidColorBrush x:Key="Button.Pressed.Border" Color="Transparent"/>
-        <SolidColorBrush x:Key="Button.Disabled.Background" Color="#FFF4F4F4"/>
-        <SolidColorBrush x:Key="Button.Disabled.Border" Color="#FFADB2B5"/>
-        <SolidColorBrush x:Key="Button.Disabled.Foreground" Color="#FF838383"/>
 
         <Style x:Key="Fluid:ToggleButton" TargetType="{x:Type ToggleButton}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual1}"/>
@@ -508,7 +507,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="true">
-                                <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background}"/>
+                                <Setter Property="Background" TargetName="border" Value="#d3d3d3"/>
                                 <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="true">
@@ -565,7 +564,7 @@
             </Style>
         </TabControl.Resources>
 
-        <!-- Source Tab -->
+        <!--  Tab -->
         <TabItem>
             <!-- Tab Icon and Title -->
             <TabItem.Header>
@@ -590,8 +589,8 @@
                 <!-- Header -->
                 <Border Padding="0,0,0,20">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Bold">Source</TextBlock>
-                        <TextBlock FontWeight="Thin" FontSize="24" Foreground="Black" Margin="10,0,0,0">Where wallpapers are chosen from</TextBlock>
+                        <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Bold">Source</TextBlock>
+                        <TextBlock FontWeight="Thin" FontSize="24" Foreground="{StaticResource PrimaryTextFore}" Margin="10,0,0,0">Where wallpapers are chosen from</TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -649,15 +648,15 @@
                 <!-- Header -->
                 <Border Padding="0,0,0,20">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Bold">Interval</TextBlock>
-                        <TextBlock FontWeight="Thin" FontSize="24" Foreground="Black" Margin="10,0,0,0">When the wallpaper changes</TextBlock>
+                        <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Bold">Interval</TextBlock>
+                        <TextBlock FontWeight="Thin" FontSize="24" Foreground="{StaticResource PrimaryTextFore}" Margin="10,0,0,0">When the wallpaper changes</TextBlock>
                     </StackPanel>
                 </Border>
 
                 <!-- Interval Select -->
                 <StackPanel>
                     <DockPanel>
-                        <TextBlock Foreground="Black" Margin="0,0,5,0" FontSize="20">
+                        <TextBlock Foreground="{StaticResource PrimaryTextFore}" Margin="0,0,5,0" FontSize="20">
                             Change wallpaper every
                         </TextBlock>
                         <ToggleButton Name="EnabledToggleButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Right" Click="EnabledButton_OnClick">Enabled</ToggleButton>
@@ -665,7 +664,7 @@
                     <Border Padding="0,10,0,10">
                         <StackPanel Orientation="Horizontal">
                             <xctk:DecimalUpDown Name="IntervalDecimalUpDown" HorizontalAlignment="Center" ShowButtonSpinner="False" Margin="0,0,5,0" MaxWidth="100" Minimum="0.1" ValueChanged="IntervalUpDown_ValueChanged"></xctk:DecimalUpDown>
-                            <ComboBox Name="IntervalComboBox" Style="{DynamicResource Fluid:ComboBox}" HorizontalAlignment="Left" BorderBrush="Black" Background="White" SelectionChanged="IntervalUnit_Changed">
+                            <ComboBox Name="IntervalComboBox" Style="{DynamicResource Fluid:ComboBox}" HorizontalAlignment="Left" BorderBrush="Black" Background="{StaticResource PrimaryBack}" SelectionChanged="IntervalUnit_Changed">
                                 <ComboBoxItem>Seconds</ComboBoxItem>
                                 <ComboBoxItem>Minutes</ComboBoxItem>
                                 <ComboBoxItem>Hours</ComboBoxItem>
@@ -677,8 +676,8 @@
                     </Border>
 
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Foreground="Black" FontSize="20" Margin="0,0,5,0">Next change at</TextBlock>
-                        <TextBlock Name="NextChangeTextBlock"  Foreground="Black" FontWeight="Thin" FontSize="20" Margin="0,0,5,0">00:00:00</TextBlock>
+                        <TextBlock Foreground="{StaticResource PrimaryTextFore}" FontSize="20" Margin="0,0,5,0">Next change at</TextBlock>
+                        <TextBlock Name="NextChangeTextBlock"  Foreground="{StaticResource PrimaryTextFore}" FontWeight="Thin" FontSize="20" Margin="0,0,5,0">00:00:00</TextBlock>
                     </StackPanel>
                 </StackPanel>
                 
@@ -696,8 +695,7 @@
                             <DrawingImage>
                                 <DrawingImage.Drawing>
                                     <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
-                                        <GeometryDrawing Brush="#FF0F1729" Geometry="F0 M24,24z M0,0z M15.8694,9.53773C16.1838,8.66243,15.3376,7.81616,14.4623,8.13061L10.2921,9.62873C9.98303,9.73975,9.73975,9.98302,9.62874,10.2921L8.13063,14.4622C7.81619,15.3375,8.66245,16.1838,9.53776,15.8694L13.7079,14.3713C14.017,14.2602,14.2602,14.017,14.3713,13.7079L15.8694,9.53773z M11.3675,11.3675L13.3417,10.6583 12.6325,12.6325 10.6583,13.3417 11.3675,11.3675z" />
-                                        <GeometryDrawing Brush="#FF0F1729" Geometry="F0 M24,24z M0,0z M12,2C6.47715,2 2,6.47715 2,12 2,17.5228 6.47715,22 12,22 17.5228,22 22,17.5228 22,12 22,6.47715 17.5228,2 12,2z M4,12C4,7.58172 7.58172,4 12,4 16.4183,4 20,7.58172 20,12 20,16.4183 16.4183,20 12,20 7.58172,20 4,16.4183 4,12z" />
+                                        <GeometryDrawing Brush="#FF0F1729" Geometry="F0 M24,24z M0,0z M2.05939,10.8927C2.59723,5.90964 6.72911,2 11.7875,2 14.6474,2 17.2148,3.25301 19,5.23997L19,4C19,3.44772 19.4477,3 20,3 20.5523,3 21,3.44772 21,4L21,8C21,8.26522 20.8946,8.51957 20.7071,8.70711 20.5195,8.89464 20.2652,9 20,9L16,9C15.4477,9 15,8.55228 15,8 15,7.44771 15.4477,7 16,7L17.867,7C16.4351,5.16504 14.2403,4 11.7875,4 7.79954,4 4.4814,7.09046 4.04784,11.1073 3.98857,11.6564 3.4954,12.0535 2.9463,11.9942 2.3972,11.935 2.00012,11.4418 2.05939,10.8927z M21.0537,12.0058C21.6028,12.065 21.9999,12.5582 21.9406,13.1073 21.4028,18.0904 17.2709,22 12.2125,22 9.35262,22 6.78516,20.747 4.99998,18.76L4.99998,20C4.99998,20.5523 4.55227,21 3.99998,21 3.4477,21 2.99998,20.5523 2.99998,20L2.99998,16C2.99998,15.7348 3.10534,15.4804 3.29287,15.2929 3.48041,15.1054 3.73476,15 3.99998,15L7.99998,15C8.55227,15 8.99998,15.4477 8.99998,16 8.99998,16.5523 8.55227,17 7.99998,17L6.13297,17C7.56485,18.835 9.75975,20 12.2125,20 16.2005,20 19.5186,16.9095 19.9522,12.8927 20.0114,12.3436 20.5046,11.9465 21.0537,12.0058z" />
                                     </DrawingGroup>
                                 </DrawingImage.Drawing>
                             </DrawingImage>
@@ -711,8 +709,8 @@
                 <!-- Header -->
                 <Border Padding="0,0,0,20">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Bold">History</TextBlock>
-                        <TextBlock FontWeight="Thin" FontSize="24" Foreground="Black" Margin="10,0,0,0">See previously used wallpapers</TextBlock>
+                        <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Bold">History</TextBlock>
+                        <TextBlock FontWeight="Thin" FontSize="24" Foreground="{StaticResource PrimaryTextFore}" Margin="10,0,0,0">See previously used wallpapers</TextBlock>
                     </StackPanel>
                 </Border>
 
@@ -758,42 +756,45 @@
             <StackPanel Orientation="Vertical">
                 <!-- Header -->
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock FontSize="24" Foreground="Black" FontWeight="Bold">Settings</TextBlock>
-                    <TextBlock FontWeight="Thin" FontSize="24" Foreground="Black" Margin="10,0,0,0">Change how the app works</TextBlock>
+                    <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Bold">Settings</TextBlock>
+                    <TextBlock FontWeight="Thin" FontSize="24" Foreground="{StaticResource PrimaryTextFore}" Margin="10,0,0,0">Change how the app works</TextBlock>
                 </StackPanel>
                 
                 <!-- Style Subheader -->
                 <Border Padding="0,10,0,0">
                     <StackPanel>
-                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Wallpaper Style</TextBlock>
-                        <ComboBox Name="WallpaperModeComboBox" Style="{DynamicResource Fluid:ComboBox}" SelectedIndex="0" HorizontalAlignment="Left" BorderBrush="Black" Background="White">
+                        <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Thin" Padding="0 0 0 8">Wallpaper Style</TextBlock>
+                        <ComboBox Name="WallpaperModeComboBox" Style="{DynamicResource Fluid:ComboBox}" HorizontalAlignment="Left" BorderBrush="Black" Background="{StaticResource PrimaryBack}" SelectionChanged="WallpaperModeComboBox_OnSelectionChanged">
                             <ComboBoxItem>Fill</ComboBoxItem>
                             <ComboBoxItem>Fit</ComboBoxItem>
                             <ComboBoxItem>Stretch</ComboBoxItem>
-                            <ComboBoxItem>Tile</ComboBoxItem>
                             <ComboBoxItem>Center</ComboBoxItem>
                             <ComboBoxItem>Span</ComboBoxItem>
                         </ComboBox>
+                        <Border Padding="0,10,0,0">
+                            <ToggleButton Name="TileToggleButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Left" Click="TileToggleButton_OnClick">Tile image</ToggleButton>
+                        </Border>
                     </StackPanel>
                 </Border>
-                
-                <!-- Start Minimised Subheader -->
-                <Border Padding="0,10,0,0">
-                    <StackPanel>
-                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Startup</TextBlock>
-                        <ToggleButton Name="StartHiddenButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Left" Click="StartHiddenButton_Click">Start minimised</ToggleButton>
-                    </StackPanel>
-                </Border>
-                
+                <!-- Theme Subheader -->
+                <!-- <Border Padding="0,10,0,0"> -->
+                <!--     <StackPanel> -->
+                <!--         <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Thin" Padding="0 0 0 8">App Theme</TextBlock> -->
+                <!--         ~1~ <ComboBox Name="ThemeComboBox" Style="{DynamicResource Fluid:ComboBox}" SelectionChanged="ThemeComboBox_OnSelectionChanged" HorizontalAlignment="Left" BorderBrush="Black" Background="{StaticResource PrimaryBack}"> @1@ -->
+                <!--         ~1~     <ComboBoxItem>System</ComboBoxItem> @1@ -->
+                <!--         ~1~     <ComboBoxItem>Light</ComboBoxItem> @1@ -->
+                <!--         ~1~     <ComboBoxItem>Dark</ComboBoxItem> @1@ -->
+                <!--         ~1~ </ComboBox> @1@ -->
+                <!--     </StackPanel> -->
+                <!-- </Border> -->
                 <!-- Startup Subheader -->
                 <Border Padding="0,10,0,0">
                     <StackPanel>
-                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Startup</TextBlock>
+                        <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Thin">Startup</TextBlock>
+                        <ToggleButton Name="StartHiddenButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Left" Click="StartHiddenButton_Click">Start minimised</ToggleButton>
                         <ToggleButton Name="StartupToggleButton" Style="{DynamicResource Fluid:ToggleButton}" HorizontalAlignment="Left" Click="StartupButton_Click">Run on startup</ToggleButton>
                     </StackPanel>
                 </Border>
-                
-                
             </StackPanel>
         </TabItem>
 
@@ -822,15 +823,15 @@
             <StackPanel Orientation="Vertical">
                 <!-- Header -->
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock FontSize="24" Foreground="Black" FontWeight="Bold">About</TextBlock>
-                    <TextBlock FontWeight="Thin" FontSize="24" Foreground="Black" Margin="10,0,0,0">Information about the app</TextBlock>
+                    <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Bold">About</TextBlock>
+                    <TextBlock FontWeight="Thin" FontSize="24" Foreground="{StaticResource PrimaryTextFore}" Margin="10,0,0,0">Information about the app</TextBlock>
                 </StackPanel>
-                <TextBlock Name="VersionTextBlock" Foreground="Black" FontWeight="Thin"></TextBlock>
+                <TextBlock Name="VersionTextBlock" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Thin"></TextBlock>
 
                 <!-- Icons Subheader -->
                 <Border Padding="0,10,0,10">
                     <StackPanel>
-                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Icons</TextBlock>
+                        <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Thin">Icons</TextBlock>
                         <TextBlock>
                             <Hyperlink NavigateUri="https://www.svgrepo.com/collection/wave-oval-interface-icons/" RequestNavigate="Hyperlink_RequestNavigate">Arthur Kazais</Hyperlink>
                         </TextBlock>
@@ -840,7 +841,7 @@
                 <!-- Source Code Subheader -->
                 <Border Padding="0,10,0,10">
                     <StackPanel>
-                        <TextBlock FontSize="24" Foreground="Black" FontWeight="Thin">Source Code</TextBlock>
+                        <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" FontWeight="Thin">Source Code</TextBlock>
                         <TextBlock>
                             <Hyperlink NavigateUri="https://github.com/titushm/FluidBG" RequestNavigate="Hyperlink_RequestNavigate">Github</Hyperlink>
                         </TextBlock>
@@ -851,7 +852,7 @@
                 <!-- Debug Subheader -->
                 <Border Padding="0,10,0,10">
                     <StackPanel>
-                        <TextBlock FontSize="24" Foreground="Black" Padding="0,0,0,5" FontWeight="Thin">Debug</TextBlock>
+                        <TextBlock FontSize="24" Foreground="{StaticResource PrimaryTextFore}" Padding="0,0,0,5" FontWeight="Thin">Debug</TextBlock>
                         <StackPanel Orientation="Horizontal">
                             <Button Style="{StaticResource Fluid:Button}" Click="LogButton_Click" Margin="0,0,2,0">Open Log File</Button>
                             <Button Style="{StaticResource Fluid:Button}" Click="ClearLogButton_Click" Margin="2,0,2,0">Clear Log File</Button>
