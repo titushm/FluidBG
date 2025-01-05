@@ -15,7 +15,7 @@ using Newtonsoft.Json.Linq;
 namespace FluidBG;
 
 public static class Constants {
-    public static readonly Version Version = new(1, 1, 0);
+    public static readonly Version Version = new(1, 1, 1);
     public static readonly string GithubRepoUrl = "https://github.com/titushm/FluidBG";
     public static readonly int[] ComboBoxSecondIntervals = { 1, 60, 3600, 86400, 604800 };
     public static RegistryKey StartupRegistryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
