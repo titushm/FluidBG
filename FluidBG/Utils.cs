@@ -79,35 +79,42 @@ public class Utils {
             return new[] { description };
         }
         catch {
-            DateTime now = DateTime.UtcNow;
-            string time = now.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            string url =
-                $"https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json&ua=WindowsShellClient%2F0&cdm=1&disphorzres=9999&dispvertres=9999&pl=en-US&lc=en-US&ctry=us&time={time}";
-            JObject jsonObject = null;
             try{
-                Task<HttpResponseMessage> response = httpClient.GetAsync(url);
-                string responseString = response.Result.Content.ReadAsStringAsync().Result;
-                jsonObject = JsonConvert.DeserializeObject<JObject>(responseString);
+                DateTime now = DateTime.UtcNow;
+                string time = now.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                string url =
+                    $"https://arc.msn.com/v3/Delivery/Placement?pid=209567&fmt=json&ua=WindowsShellClient%2F0&cdm=1&disphorzres=9999&dispvertres=9999&pl=en-US&lc=en-US&ctry=us&time={time}";
+                JObject jsonObject = null;
+                try{
+                    Task<HttpResponseMessage> response = httpClient.GetAsync(url);
+                    string responseString = response.Result.Content.ReadAsStringAsync().Result;
+                    jsonObject = JsonConvert.DeserializeObject<JObject>(responseString);
+                }
+                catch{
+                    Log("Failed to request api url.");
+                }
+
+                Random random = new Random();
+                string itemString = jsonObject["batchrsp"]["items"][random.Next(2)]["item"].ToString();
+                JObject itemObject = JsonConvert.DeserializeObject<JObject>(itemString);
+                string spotlightUrl = itemObject["ad"]["image_fullscreen_001_landscape"]["u"].ToString();
+                Task<Stream> stream = httpClient.GetStreamAsync(spotlightUrl);
+                string imagePath = Constants.Paths.DataFolder + "\\spotlight.jpg";
+                using (var fs = new FileStream(imagePath, FileMode.OpenOrCreate)){
+                    stream.Result.CopyTo(fs);
+                }
+
+                string title = itemObject["ad"]["title_text"]["tx"].ToString();
+                string author = itemObject["ad"]["copyright_text"]["tx"].ToString();
+                return new[]{ title, author };
             }
             catch{
-                Log("Failed to request api url.");
+                LogToFile("Both methods failed to obtain spotlight image.");
+                return new string[]{ };
             }
-
-            Random random = new Random();
-            string itemString = jsonObject["batchrsp"]["items"][random.Next(2)]["item"].ToString();
-            JObject itemObject = JsonConvert.DeserializeObject<JObject>(itemString);
-            string spotlightUrl = itemObject["ad"]["image_fullscreen_001_landscape"]["u"].ToString();
-            Task<Stream> stream = httpClient.GetStreamAsync(spotlightUrl);
-            string imagePath = Constants.Paths.DataFolder + "\\spotlight.jpg";
-            using (var fs = new FileStream(imagePath, FileMode.OpenOrCreate)){
-                stream.Result.CopyTo(fs);
-            }
-
-            string title = itemObject["ad"]["title_text"]["tx"].ToString();
-            string author = itemObject["ad"]["copyright_text"]["tx"].ToString();
-            return new string[]{ title, author };
         }
     }
+
 
     public static void Log(string text) {
         try {
