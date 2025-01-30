@@ -5,33 +5,31 @@ namespace FluidBG;
 
 public class IntervalTimer {
     public DispatcherTimer? Timer { get; }
-    private DateTime? LastTick { get; set; }
+    public DateTime? LastTick { get; set; }
 
     public IntervalTimer(double interval, Action tickFunction) {
-        DispatcherTimer intervalTimer = new DispatcherTimer();
-        intervalTimer.Interval = TimeSpan.FromSeconds(interval);
-        intervalTimer.Tick += (sender, e) => {
+        Timer = new DispatcherTimer();
+        Timer.Interval = TimeSpan.FromSeconds(interval);
+        Timer.Tick += (sender, e) => {
             LastTick = DateTime.Now;
             tickFunction();
         };
-        Timer = intervalTimer;
     }
     
     public void Start() {
         Timer?.Start();
         LastTick = DateTime.Now;
     }
-    
+    public void ResetTimer() {
+        Timer.Stop();
+        Timer.Start();
+        LastTick = DateTime.Now;
+    }
     public void ChangeInterval(double interval) {
         Timer.Interval = TimeSpan.FromSeconds(interval);
+        ResetTimer();
     }
     
-    public void ChangeTickFunction(Action tickFunction) {
-        Timer.Tick += (sender, e) => {
-            LastTick = DateTime.Now;
-            tickFunction();
-        };
-    }
     
     public void Stop() {
         Timer?.Stop();

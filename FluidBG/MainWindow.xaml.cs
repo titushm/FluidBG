@@ -28,7 +28,7 @@ namespace FluidBG {
 			Utils.ValidateConfig();
             Utils.Log("MainWindow Called");
 			InitializeComponent();
-			if (Utils.GetConfigProperty<bool>("startHidden")) {
+			if (Utils.GetConfigProperty<bool>("startHidden"))  {
 				Hide();
 			}
 			using (Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG_Disabled.ico"))
@@ -289,9 +289,11 @@ namespace FluidBG {
 
 		private void ChangeNowButton_Click(object sender, RoutedEventArgs e) {
 			ChangeRandomWallpaper();
-		}
+			Timer.ResetTimer();
+			UpdateNextChange();
+        }
 
-		private void SetHistoryWallpaperButton_Click(object sender, RoutedEventArgs e) {
+        private void SetHistoryWallpaperButton_Click(object sender, RoutedEventArgs e) {
 			if (HistoryListBox.SelectedIndex == -1) return;
 			string path = ((TextBlock)((DockPanel)((ListBoxItem)HistoryListBox.Items[HistoryListBox.SelectedIndex]).Content).Children[0]).Text;
 			if (!File.Exists(path)) {
@@ -344,10 +346,11 @@ namespace FluidBG {
 			}
 
 			Utils.SetConfigProperty("interval", new JValue(e.NewValue));
-			Timer.ChangeInterval(Convert.ToDouble(e.NewValue) * Constants.ComboBoxSecondIntervals[IntervalComboBox.SelectedIndex]);
-		}
+            Timer.ChangeInterval(Convert.ToDouble(e.NewValue) * Constants.ComboBoxSecondIntervals[IntervalComboBox.SelectedIndex]);
+            UpdateNextChange();
+        }
 
-		private void IntervalUnit_Changed(object sender, SelectionChangedEventArgs e) {
+        private void IntervalUnit_Changed(object sender, SelectionChangedEventArgs e) {
 			ComboBoxItem selectedItem = (ComboBoxItem)e.AddedItems[0];
 			int selectedIndex = IntervalComboBox.Items.IndexOf(selectedItem);
 			if (IntervalComboBox.SelectedIndex == -1 || IntervalDecimalUpDown.Value == null) return;
@@ -360,9 +363,10 @@ namespace FluidBG {
 
 			Utils.SetConfigProperty("intervalIndex", new JValue(selectedIndex));
 			Timer.ChangeInterval(Convert.ToDouble(IntervalDecimalUpDown.Value.Value) * Constants.ComboBoxSecondIntervals[selectedIndex]);
-		}
+            UpdateNextChange();
+        }
 
-		private void EnabledButton_OnClick(object sender, RoutedEventArgs e) {
+        private void EnabledButton_OnClick(object sender, RoutedEventArgs e) {
 			Utils.SetConfigProperty("enabled", new JValue(EnabledToggleButton.IsChecked));
 			Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG_Disabled.ico");
 
