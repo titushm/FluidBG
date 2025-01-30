@@ -36,7 +36,7 @@ namespace FluidBG {
 			NotifyIcon.Visible = true;
 			NotifyIcon.Text = "FluidBG";
 			NotifyIcon.ContextMenuStrip = new ContextMenuStrip();
-			NotifyIcon.ContextMenuStrip.Items.Add("Change Now").Click += (sender, e) => { ChangeRandomWallpaper(); };
+			NotifyIcon.ContextMenuStrip.Items.Add("Change Now").Click += (sender, e) => { ChangeWallaperNow(); };
 			NotifyIcon.ContextMenuStrip.Items.Add("-");
 			NotifyIcon.ContextMenuStrip.Items.Add("Exit").Click += (sender, e) => { System.Windows.Application.Current.Shutdown(); };
 			NotifyIcon.Click += (sender, e) => {
@@ -287,11 +287,14 @@ namespace FluidBG {
         private void ClearLogButton_Click(object sender, RoutedEventArgs e) {
 			Utils.ClearLogFile();
 		}
-
-		private void ChangeNowButton_Click(object sender, RoutedEventArgs e) {
+		private void ChangeWallaperNow() {
 			ChangeRandomWallpaper();
 			Timer.ResetTimer();
 			UpdateNextChange();
+		}
+
+		private void ChangeNowButton_Click(object sender, RoutedEventArgs e) {
+			ChangeWallaperNow();
         }
 
         private void SetHistoryWallpaperButton_Click(object sender, RoutedEventArgs e) {
