@@ -49,7 +49,8 @@ namespace FluidBG {
 			};
             bool enabled = Utils.GetConfigProperty<bool>("enabled");
             int intervalIndex = Utils.GetConfigProperty<int>("intervalIndex");
-            Timer = new IntervalTimer(Constants.ComboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
+            int interval = Utils.GetConfigProperty<int>("interval");
+            Timer = new IntervalTimer(interval * Constants.ComboBoxSecondIntervals[intervalIndex], ChangeRandomWallpaper);
             if (enabled) {
                 Timer.Start();
                 using (Stream? iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FluidBG.FluidBG.ico"))
