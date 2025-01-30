@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -138,7 +139,7 @@ public class Utils {
             JsonConvert.DeserializeObject<JObject>(jsonString);
         }
         catch {
-            File.WriteAllText(Constants.Paths.ConfigFile, "{}");
+            File.WriteAllText(Constants.Paths.ConfigFile, "{\"sourcePaths\":[]}");
         }
     }
     
