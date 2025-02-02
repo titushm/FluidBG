@@ -6,7 +6,6 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Windows;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,7 +13,7 @@ using Newtonsoft.Json.Linq;
 namespace FluidBG;
 
 public static class Constants {
-    public static readonly Version Version = new(1, 1, 2);
+    public static readonly Version Version = new(1, 1, 3);
     public static readonly string GithubRepoUrl = "https://github.com/titushm/FluidBG";
     public static readonly int[] ComboBoxSecondIntervals = { 1, 60, 3600, 86400, 604800 };
     public static RegistryKey StartupRegistryKey = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
@@ -39,6 +38,16 @@ public static class Constants {
         "jpg",
         "tiff",
         "bmp"
+    };
+
+    public static Dictionary<string, Type> configProperties = new() {
+        { "sourcePaths", typeof(string[]) },
+        { "wallpaperModeIndex", typeof(int) },
+        { "intervalIndex", typeof(int) },
+        { "interval", typeof(double) },
+        { "tileImage", typeof(bool) },
+        { "enabled", typeof(bool) },
+        { "startHidden", typeof(bool) }
     };
 }
 
@@ -130,23 +139,59 @@ public class Utils {
         Log("Log file cleared");
     }
     
+    static object? TryConvert(JToken token, Type targetType) {
+        try {
+            MethodInfo method = typeof(JToken).GetMethod("ToObject", Type.EmptyTypes);
+            MethodInfo genericMethod = method.MakeGenericMethod(targetType);
+            object result = genericMethod.Invoke(token, null);
+            return result;
+        } catch {
+            return null;
+        }
+    }
+    
     public static void ValidateConfig() {
         if (!Directory.Exists(Constants.Paths.DataFolder)) {
             Directory.CreateDirectory(Constants.Paths.DataFolder);
         }
-        try {
+        JObject jsonObject;
+        try{
             string jsonString = File.ReadAllText(Constants.Paths.ConfigFile);
-            JsonConvert.DeserializeObject<JObject>(jsonString);
+            jsonObject = JsonConvert.DeserializeObject<JObject>(jsonString);
+            if (jsonObject == null) throw new Exception();
+        } catch {
+            File.WriteAllText(Constants.Paths.ConfigFile, "{}");
+            ValidateConfig();
+            return;
         }
-        catch {
-            File.WriteAllText(Constants.Paths.ConfigFile, "{\"sourcePaths\":[]}");
+
+
+        foreach (var item in Constants.configProperties){
+            Type type = item.Value;
+            object? success = null;
+            if (jsonObject.ContainsKey(item.Key)){
+                success = TryConvert(jsonObject[item.Key], type);
+            }
+
+            if (success == null){
+                object instance;
+                if (type.IsArray) {
+                    instance = Array.CreateInstance(type.GetElementType(), 0);
+                } else{
+                    instance = Activator.CreateInstance(type);
+                }
+
+                jsonObject[item.Key] = JToken.FromObject(instance);
+            }
         }
+        File.WriteAllText(Constants.Paths.ConfigFile, JsonConvert.SerializeObject(jsonObject));
+        
     }
     
     public static T GetConfigProperty<T>(string propertyName) {
         ValidateConfig();
         string jsonString = File.ReadAllText(Constants.Paths.ConfigFile);
-        JObject jsonObject = JsonConvert.DeserializeObject<JObject>(jsonString);
+        JObject jsonObject = JsonConvert.DeserializeObject<JObject>(jsonString) ?? new JObject();
         if (jsonObject.ContainsKey(propertyName)) {
             return jsonObject[propertyName].ToObject<T>();
         }
@@ -157,9 +202,9 @@ public class Utils {
     public static void SetConfigProperty(string propertyName, JToken value) {
         ValidateConfig(); 
         string jsonString = File.ReadAllText(Constants.Paths.ConfigFile);
-        JObject jsonObject = JsonConvert.DeserializeObject<JObject>(jsonString);
+        JObject jsonObject = JsonConvert.DeserializeObject<JObject>(jsonString) ?? new JObject();
         if (jsonObject.ContainsKey(propertyName)) {
-            jsonObject.Property(propertyName).Remove();
+            jsonObject.Property(propertyName)?.Remove();
         }
 
         jsonObject.Add(propertyName, value);
